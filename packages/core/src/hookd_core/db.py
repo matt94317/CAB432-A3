@@ -1,1 +1,12 @@
-"""Engine and session factory (create_engine / sessionmaker) shared by API and worker."""
+"""Engine and session factory shared by the API and worker."""
+
+from sqlalchemy import Engine, create_engine
+from sqlalchemy.orm import Session, sessionmaker
+
+
+def make_engine(database_url: str) -> Engine:
+    return create_engine(database_url, pool_pre_ping=True)
+
+
+def make_session_factory(engine: Engine) -> sessionmaker[Session]:
+    return sessionmaker(bind=engine, expire_on_commit=False)
