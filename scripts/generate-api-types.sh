@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
-# Regenerate apps/web/src/api/schema.d.ts from the running FastAPI OpenAPI schema.
+# Regenerate apps/web/src/api/schema.d.ts from the FastAPI app (no server needed).
 set -euo pipefail
-npm run gen:api -w apps/web
+root="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$root"
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+uv run python scripts/export_openapi.py "$tmp/openapi.json"
+npx --workspace apps/web openapi-typescript "$tmp/openapi.json" -o "$root/apps/web/src/api/schema.d.ts"

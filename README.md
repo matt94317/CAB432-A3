@@ -26,7 +26,8 @@ models (the worker upserts posts, the API reads them).
 ## Local development
 
 ```bash
-cp .env.example .env
+cp .env.example .env                        # then set COGNITO_* (see infra/README.md)
+cp apps/web/.env.example apps/web/.env      # then set VITE_COGNITO_*
 docker compose up -d postgres redis sqs     # backing services
 uv sync --all-packages                      # Python deps (uv workspace)
 uv run alembic -c packages/core/alembic.ini upgrade head
@@ -45,7 +46,7 @@ Or run everything in containers: `docker compose up --build`.
 | Lint / format | `uv run ruff check .` / `uv run ruff format .` |
 | Python tests | `uv run pytest` |
 | New migration | `uv run alembic -c packages/core/alembic.ini revision --autogenerate -m "msg"` |
-| Regenerate API types | `npm run gen:api -w apps/web` (API must be running) |
+| Regenerate API types | `npm run gen:api -w apps/web` (after changing API schemas or routes) |
 
 ## Testing with a real TikTok account
 
@@ -61,6 +62,12 @@ let the sync worker pull its actual posts and metrics:
 
 `TIKTOK_MODE=mock` (the default) is still available for running locally
 without TikTok credentials.
+
+## Troubleshooting
+
+**`ModuleNotFoundError: No module named 'hookd_api'` (macOS):** macOS can mark files in
+`.venv` as hidden, and Python 3.12.13+ skips hidden `.pth` files, which breaks the
+editable workspace installs. Fix with `chflags -R nohidden .venv`.
 
 ## Branching
 

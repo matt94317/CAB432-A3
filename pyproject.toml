@@ -2,6 +2,14 @@
 name = "hookd-tracker"
 version = "0.1.0"
 requires-python = ">=3.12"
+# Depend on every member so `uv run` from the repo root always has them installed
+dependencies = ["hookd-api", "hookd-worker", "hookd-mcp", "hookd-core"]
+
+[tool.uv.sources]
+hookd-api = { workspace = true }
+hookd-worker = { workspace = true }
+hookd-mcp = { workspace = true }
+hookd-core = { workspace = true }
 
 [tool.uv.workspace]
 members = ["apps/api", "apps/worker", "apps/mcp", "packages/core"]
