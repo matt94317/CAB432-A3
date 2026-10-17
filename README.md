@@ -61,3 +61,13 @@ let the sync worker pull its actual posts and metrics:
 
 `TIKTOK_MODE=mock` (the default) is still available for running locally
 without TikTok credentials.
+
+## Branching
+
+| Branch | Purpose |
+|---|---|
+| `main` | Production-ready. Only updated by PR from `dev` once CI passes. |
+| `dev` | Integration branch. Feature branches merge here by PR. |
+| `feature/<name>` | One epic or story, branched from `dev`. Put Jira keys (e.g. `HOOKD-7`) in commit messages. |
+
+Flow: `feature/*` → PR → `dev` → PR (release) → `main`.
