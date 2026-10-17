@@ -1,0 +1,11 @@
+# Used instead of the root .dockerignore when building apps/web/Dockerfile
+# (BuildKit). The root one excludes apps/web and packages/ui for the Python images.
+*
+!package.json
+!package-lock.json
+!apps/web
+!packages/ui
+**/node_modules
+**/dist
+**/.env
+**/.env.*
