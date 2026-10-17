@@ -1,0 +1,21 @@
+[project]
+name = "hookd-mcp"
+version = "0.1.0"
+description = "Hookd Tracker MCP server"
+requires-python = ">=3.12"
+dependencies = [
+    "hookd-core",
+    "mcp[cli]>=2.3",
+    "httpx>=0.28",
+    "pydantic-settings>=2.6",
+]
+
+[project.scripts]
+hookd-mcp = "hookd_mcp.server:main"
+
+[tool.uv.sources]
+hookd-core = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

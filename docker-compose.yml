@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: hookd
+      POSTGRES_PASSWORD: hookd
+      POSTGRES_DB: hookd
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+
+  # Local stand-in for Amazon SQS
+  sqs:
+    image: softwaremill/elasticmq-native
+    ports: ["9324:9324"]
+    volumes: [./infra/local/elasticmq.conf:/opt/elasticmq.conf:ro]
+
+  api:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    env_file: .env
+    environment: &container-env
+      DATABASE_URL: postgresql+psycopg://hookd:hookd@postgres:5432/hookd
+      REDIS_URL: redis://redis:6379/0
+      AWS_ENDPOINT_URL: http://sqs:9324
+      SYNC_QUEUE_URL: http://sqs:9324/000000000000/hookd-sync
+    command: uvicorn hookd_api.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes: [./apps/api/src:/app/apps/api/src, ./packages/core/src:/app/packages/core/src]
+    ports: ["8000:8000"]
+    depends_on: [postgres, redis, sqs]
+
+  worker:
+    build: { context: ., dockerfile: apps/worker/Dockerfile }
+    env_file: .env
+    environment: *container-env
+    volumes: [./apps/worker/src:/app/apps/worker/src, ./packages/core/src:/app/packages/core/src]
+    depends_on: [postgres, redis, sqs]
+
+  mcp:
+    build: { context: ., dockerfile: apps/mcp/Dockerfile }
+    env_file: .env
+    environment:
+      HOOKD_API_URL: http://api:8000/api
+    ports: ["8001:8001"]
+    depends_on: [api]
+
+volumes:
+  pgdata:

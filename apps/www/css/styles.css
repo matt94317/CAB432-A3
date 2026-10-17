@@ -1,0 +1,21 @@
+/* Home page styles. Tokens mirror packages/ui/tokens.css. */
+
+:root {
+  --hk-color-bg: #ffffff;
+  --hk-color-fg: #111111;
+  --hk-color-accent: #ff2d55;
+  --hk-font-sans: system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--hk-font-sans);
+  color: var(--hk-color-fg);
+  background: var(--hk-color-bg);
+}

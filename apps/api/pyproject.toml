@@ -1,0 +1,21 @@
+[project]
+name = "hookd-api"
+version = "0.1.0"
+description = "Hookd Tracker REST API"
+requires-python = ">=3.12"
+dependencies = [
+    "hookd-core",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic-settings>=2.6",
+    "pyjwt[crypto]>=2.10",
+    "redis>=5.2",
+    "boto3>=1.35",
+]
+
+[tool.uv.sources]
+hookd-core = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

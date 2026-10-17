@@ -1,0 +1,14 @@
+[project]
+name = "hookd-core"
+version = "0.1.0"
+description = "Shared models, migrations and domain logic for Hookd Tracker"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.14",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

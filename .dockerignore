@@ -1,0 +1,13 @@
+.git
+.venv
+**/__pycache__
+**/node_modules
+**/dist
+apps/web
+apps/www
+packages/ui
+infra
+Docs
+*.pdf
+*.md
+.env

@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Terraform / CDK
+.terraform/
+*.tfstate*
+cdk.out/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

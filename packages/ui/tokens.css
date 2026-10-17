@@ -1,0 +1,16 @@
+/* Hookd design tokens: shared by the app (apps/web). Copy into apps/www when they change. */
+
+:root {
+  /* Colour */
+  --hk-color-bg: #ffffff;
+  --hk-color-fg: #111111;
+  --hk-color-accent: #ff2d55;
+  --hk-color-on-target: #16a34a;
+  --hk-color-behind: #dc2626;
+
+  /* Type */
+  --hk-font-sans: system-ui, sans-serif;
+
+  /* Spacing / radius */
+  --hk-radius: 8px;
+}
