@@ -15,8 +15,8 @@ apps/
 packages/
   core/      Shared Python: SQLAlchemy models, Alembic migrations, matching logic -> hookd_core
   ui/        Shared design tokens
-infra/       Infrastructure as code + local dev config
-scripts/     Seed data, type generation
+infra/       Terraform (infra/terraform) + local dev config
+scripts/     Seed data, type generation, deploy.sh
 Docs/        Project plan and A3 guidance
 ```
 
@@ -38,6 +38,11 @@ npm run dev -w apps/web                     # http://localhost:5173
 ```
 
 Or run everything in containers: `docker compose up --build`.
+
+## Deploying to AWS
+
+Terraform in `infra/terraform/envs/cab432`, then `scripts/deploy.sh` to build and
+push the images. See [infra/README.md](infra/README.md).
 
 ## Common commands
 
