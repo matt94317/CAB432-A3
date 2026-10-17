@@ -1,2 +1,8 @@
 @import "tailwindcss";
 @import "@hookd/ui/tokens.css";
+
+@theme inline {
+  --color-brand: var(--hk-color-accent);
+  --color-on-target: var(--hk-color-on-target);
+  --color-behind: var(--hk-color-behind);
+}
