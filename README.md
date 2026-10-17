@@ -65,9 +65,14 @@ without TikTok credentials.
 
 ## Troubleshooting
 
-**`ModuleNotFoundError: No module named 'hookd_api'` (macOS):** macOS can mark files in
-`.venv` as hidden, and Python 3.12.13+ skips hidden `.pth` files, which breaks the
-editable workspace installs. Fix with `chflags -R nohidden .venv`.
+**`ModuleNotFoundError: No module named 'hookd_...'` (macOS):** if the repo is in an
+iCloud-synced folder (Desktop/Documents), iCloud marks files in `.venv` as hidden and
+Python 3.12.13+ skips hidden `.pth` files, breaking the workspace installs. Keep the
+venv out of iCloud by giving it a `.nosync` name:
+
+```bash
+rm -rf .venv && mkdir .venv.nosync && ln -s .venv.nosync .venv && uv sync
+```
 
 ## Branching
 
