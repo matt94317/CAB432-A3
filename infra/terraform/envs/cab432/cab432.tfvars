@@ -32,8 +32,8 @@ scheduler_role_arn            = "arn:aws:iam::901444280953:role/CAB432-EventBrid
 domain_name     = "n12191434.cab432.com"
 zone_name       = "cab432.com"
 certificate_arn = "arn:aws:acm:ap-southeast-2:901444280953:certificate/dd11cb64-3e67-466f-b78c-441aab10e389"
-# The A2 API Gateway alias still owns n12191434.cab432.com; set true to take it over
-dns_allow_overwrite = false
+# A2 is finished, so Hookd takes over n12191434.cab432.com from the A2 API Gateway alias
+dns_allow_overwrite = true
 
 enable_cloudfront = true
 tiktok_mode       = "mock"
