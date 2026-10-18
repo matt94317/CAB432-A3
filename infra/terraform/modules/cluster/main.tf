@@ -42,6 +42,12 @@ variable "secret_arns" {
   default = []
 }
 
+variable "table_arns" {
+  description = "DynamoDB tables the services read and write (only used when creating the task role)"
+  type        = list(string)
+  default     = []
+}
+
 variable "extra_task_policy_arns" {
   description = "Managed policies for the created task role (e.g. DynamoDB access later)"
   type        = list(string)
@@ -132,6 +138,21 @@ resource "aws_iam_role_policy" "task_sqs" {
         "sqs:GetQueueAttributes",
       ]
       Resource = var.queue_arns
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "task_dynamodb" {
+  count = local.create_task_role && length(var.table_arns) > 0 ? 1 : 0
+  role  = aws_iam_role.task[0].id
+
+  # The repositories only use these four calls (no batch, transaction or scan)
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem", "dynamodb:Query"]
+      Resource = concat(var.table_arns, [for arn in var.table_arns : "${arn}/index/*"])
     }]
   })
 }

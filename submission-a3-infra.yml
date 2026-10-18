@@ -4,7 +4,6 @@
 # `terraform apply`, regenerate this whole file from the real resources:
 #   cd infra/terraform/envs/cab432
 #   terraform output -raw gradescope_infra_yaml > ../../../../submission-a3-infra.yml
-# TODO: add the database table(s) once the A3 database is decided.
 
 cloudInfrastructure:
   # --- Edge and routing ---
@@ -68,6 +67,11 @@ cloudInfrastructure:
   - type: ECR repository
     arn: arn:aws:ecr:ap-southeast-2:901444280953:repository/n12191434-a3-hookd-web
     description: Container images for the web service.
+
+  # --- Data ---
+  - type: DynamoDB table
+    arn: arn:aws:dynamodb:ap-southeast-2:901444280953:table/n12191434-a3-hookd
+    description: Stores users, campaigns, creators, assignments and posts (single-table, on-demand).
 
   # --- Messaging and scheduling ---
   - type: SQS queue

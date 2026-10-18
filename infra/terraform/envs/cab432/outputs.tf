@@ -57,6 +57,10 @@ output "cognito_client_id" {
 
 # --- Backing services ---
 
+output "dynamodb_table" {
+  value = module.table.name
+}
+
 output "sync_queue_url" {
   value = module.queue.queue_url
 }
@@ -111,6 +115,7 @@ locals {
       { type = "Application Auto Scaling target", arn = module.api.autoscaling_target_id, description = "Scales the API from 1 to 4 tasks on CPU and requests per task." },
       { type = "Application Auto Scaling target", arn = module.worker.autoscaling_target_id, description = "Scales sync workers from 0 to 4 tasks on SQS queue depth." },
       { type = "Application Load Balancer", arn = module.edge.alb_arn, description = "HTTPS entry point routing /api, /mcp and the web app to their services." },
+      { type = "DynamoDB table", arn = module.table.arn, description = "Stores users, campaigns, creators, assignments and posts (single-table, on-demand)." },
       { type = "SQS queue", arn = module.queue.queue_arn, description = "Buffers TikTok sync jobs for the workers." },
       { type = "SQS queue", arn = module.queue.dlq_arn, description = "Dead-letter queue for sync jobs that keep failing." },
       { type = "EventBridge Scheduler schedule", arn = module.queue.schedule_arn, description = "Queues a scheduled sync every 6 hours." },

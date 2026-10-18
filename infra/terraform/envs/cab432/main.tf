@@ -14,6 +14,9 @@ locals {
     COGNITO_USER_POOL_ID  = module.auth.user_pool_id
     COGNITO_APP_CLIENT_ID = module.auth.client_id
     TIKTOK_MODE           = var.tiktok_mode
+    STORAGE               = "dynamodb"
+    DYNAMODB_TABLE        = module.table.name
+    SYNC_MODE             = "queue" # "Sync now" goes to the worker over SQS
   }
 }
 
@@ -57,11 +60,15 @@ module "cluster" {
   task_role_arn         = var.task_role_arn
   execution_role_arn    = var.execution_role_arn
   queue_arns            = [module.queue.queue_arn]
+  table_arns            = [module.table.arn]
   secret_arns           = [module.secrets.arn]
 }
 
-# TODO(database): add the database module here once chosen (likely DynamoDB)
-# and pass its settings to the services via extra_environment.
+# All app data. RDS is blocked on CAB432; the plan is to move back to RDS after A3
+module "table" {
+  source = "../../modules/table"
+  name   = local.name
+}
 
 module "edge" {
   source             = "../../modules/edge"

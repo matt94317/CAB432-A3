@@ -86,7 +86,7 @@ resources in. Each module creates the resource itself when the input is `null`.
 | ECS cluster | reused `n12191434-a2-cluster` | already exists (Container Insights on) |
 | Cognito user pool | reused `ap-southeast-2_ZvcLlofqW`; **new app client created** | one pool per student |
 | ACM cert, Route 53 zone | reused | already issued / shared zone |
-| Database | not created yet | RDS is blocked; choice pending (likely DynamoDB) |
+| Database | **DynamoDB table created** (`n12191434-a3-hookd`, on-demand) | RDS is blocked; back to RDS after A3 |
 | Everything else | created, named `n12191434-a3-hookd-*` | tagged `qut-username`, `purpose = assessment 3`, `project = hookd` |
 
 Things to know:
@@ -105,8 +105,11 @@ Things to know:
   `dns_allow_overwrite = true` is set in `cab432.tfvars` (which breaks A2).
 - **Images are ARM64** (built on Apple Silicon); task definitions use the ARM64
   runtime platform.
-- **Database pending.** No database resources yet. Pass its settings to the
-  services through `extra_environment` (see the TODO in `envs/cab432`).
+- **DynamoDB permissions.** The services need `GetItem`, `PutItem`,
+  `DeleteItem` and `Query` on the table and its `gsi1` index. The reused
+  `Task-Role-CAB432-ECS` was only checked for put and query (2026-10-17), so
+  confirm GetItem and DeleteItem after the first deploy (e.g. sign in and
+  delete a campaign). `envs/personal` creates its own role with exactly these.
 
 ## State
 
