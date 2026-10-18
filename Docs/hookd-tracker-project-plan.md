@@ -4,6 +4,41 @@
 
 ---
 
+## Product Vision
+
+**A3 scope:** *Hookd Tracker*, the campaign management layer (sections 1–12).
+**Long-term goal:** *Hookd*, an AI-powered UGC creator platform. Hosts find and sign creators, run campaigns, and manage their signed creators **through their own AI agent** using Hookd's MCP server.
+
+### Key concepts
+| Term | Meaning |
+|---|---|
+| **Host** | Any organisation or person that needs online marketing: a brand, agency, small business or solo marketer. In A3 the Host is the `Organisation` and its campaign manager. |
+| **Creator** | A UGC content creator who joins campaigns and posts content against agreed targets. |
+| **Host's AI agent** | An LLM agent the Host already uses (Claude, ChatGPT or a custom agent). It connects to Hookd through the MCP server and acts for the Host. |
+
+### Why agent-native
+Running UGC at scale usually means hiring a dedicated UGC manager to chase creators, check posts and write reports. Hookd offers campaign management as MCP tools, so a Host can manage signed creators from the AI agent they already use. There's no extra hire and no new tool to learn. The web app is for setup and oversight, and the agent handles day-to-day management. Hosts bring their own agent, so they pay for their own LLM usage and Hookd's running costs stay low.
+
+### Campaign lifecycle
+| Stage | What happens | Delivered in |
+|---|---|---|
+| 1. Discover & match | Host publishes a campaign; AI recommends creators; creators apply | Phase 4 |
+| 2. Sign | Host accepts applications and agrees targets and fees | Phase 4 |
+| 3. Run & manage | Posts tracked against targets; the Host's agent chases creators and reports progress | **Phase 1 (A3)**, expanded in Phase 2 |
+| 4. Report & pay | Campaign reports to clients; creators paid when deliverables are met | Phases 2 and 4 |
+
+### Roadmap phases
+| Phase | Name | Adds |
+|---|---|---|
+| **1** | **Hookd Tracker (A3, current)** | Campaign and creator management, TikTok sync, dashboards, first MCP tools |
+| 2 | Agent-native management | Full MCP toolset so the Host's agent can run campaigns end to end: creator messaging, AI summaries, alerts, reports. Plus agent permissions, confirmations, an audit log, teams and roles |
+| 3 | Creator platform | Creator accounts and portal, profiles with connected social accounts and verified stats, Instagram and YouTube |
+| 4 | Marketplace | Public campaign listings, creator applications, AI Host–creator matching, agreements and payments |
+
+**Why A3 builds stage 3 first:** management is useful on its own, with creators a Host already works with, and it doesn't need a two-sided marketplace to exist. The A3 MCP server is the first piece of the agent-native model, so its tools are designed as the start of the long-term agent contract. Section 13 lists the A3 design choices that keep this path open.
+
+---
+
 ## 1. Problem
 
 UGC campaign managers run campaigns with many creators at once. To check whether each creator is posting enough and performing well, they open each creator's TikTok account one by one, count posts against what was agreed, and copy metrics into spreadsheets. This is slow, error-prone, and gets worse with every creator and campaign added.
@@ -20,6 +55,13 @@ UGC campaign managers run campaigns with many creators at once. To check whether
 
 **Platform:** TikTok only (first version).
 
+### Future users (long-term platform)
+| User | Phase | Needs |
+|---|---|---|
+| **Host** (any size, incl. non-specialists) | 2+ | Manage signed creators without a dedicated UGC manager, mostly through their own AI agent |
+| **Host's AI agent** (API client, not a person) | 1 (read + target updates), 2 (full) | Safe, scoped, well-described tools that act on the Host's data |
+| **Creator** | 3+ | A profile, connected social accounts, campaign applications, targets, messages and payments in one place |
+
 ---
 
 ## 3. Scope
@@ -34,20 +76,36 @@ UGC campaign managers run campaigns with many creators at once. To check whether
 - **Extension beyond the A3 spec:** MCP server exposing campaign and creator tools to AI assistants
 
 ### Future scope (commercial roadmap)
+**Phase 2: Agent-native management**
+- Full MCP toolset: create and edit campaigns, assign creators, message creators, generate reports
+- Agent safety: scoped agent permissions, confirmation for sensitive actions, audit log of agent actions
 - AI post-to-campaign matching, AI campaign summaries, drafted creator follow-ups
-- Agent-to-agent workflows (ACP)
-- Instagram, YouTube and other platforms
-- Team invites, roles and multi-user organisations
-- Creator portal
 - Dashboard filters, report exports (CSV/PDF), automated alerts
+- Team invites, roles and multi-user organisations
 - Creator fees and payment tracking
+- Agent-to-agent workflows (ACP)
+
+**Phase 3: Creator platform**
+- Creator accounts and portal
+- Creator profiles with niches, rates, connected social accounts and verified audience stats
+- Instagram, YouTube and other platforms
+
+**Phase 4: Marketplace**
+- Public campaign listings with briefs, deliverables, budget and creator requirements
+- Creator applications to campaigns
+- AI Host–creator matching and ranked recommendations
+- Agreements and creator payments
+
+**Marketing**
 - Full marketing site with features, pricing and blog (SEO)
 
-### Out of scope
-- Content approval workflows and creative briefs
+### Out of scope (A3)
+- Content approval workflows
+- Creative briefs (they return in Phase 4 as campaign listings)
+- Any marketplace, creator-facing or payment features
 
 ### Scope statement
-Hookd Tracker is a web platform for UGC campaign managers to manage TikTok campaigns and creators in one place. Managers create campaigns, assign creators with posting targets, and track each creator's posts and performance automatically, replacing manual checks across individual TikTok accounts. The first version supports a single user type and TikTok only, and includes an MCP server so managers can query their campaign data from an AI assistant.
+Hookd Tracker is a web platform for UGC campaign managers to manage TikTok campaigns and creators in one place. Managers create campaigns, assign creators with posting targets, and track each creator's posts and performance automatically, replacing manual checks across individual TikTok accounts. The first version supports a single user type and TikTok only, and includes an MCP server so managers can query their campaign data from an AI assistant. It is the first phase of Hookd, an AI-powered UGC creator platform where Hosts match with creators and manage them through their own AI agents.
 
 ---
 
@@ -67,6 +125,20 @@ Hookd Tracker is a web platform for UGC campaign managers to manage TikTok campa
 - `platform` on Creator and Post (default `tiktok`) leaves room for Instagram and YouTube.
 - `match_source` on Post (`hashtag` / `manual`, later `ai`) tracks how a post was linked to a campaign.
 - Raw `caption` and `hashtags` are stored so future AI features have content to work with.
+- **Creator** is an org-owned roster entry in A3. In Phase 3 creators get their own accounts. A nullable link from the roster entry to a platform-wide creator profile will join the two, so existing roster data is kept.
+- **CampaignCreator** represents a "signed" creator. In Phase 4 it is created when a Host accepts an application, so tracking works the same whether a creator was added by hand or came through the marketplace.
+
+### Future entities (not built in A3)
+| Entity | Phase | Purpose |
+|---|---|---|
+| **AgentClient** | 2 | A connected AI agent: organisation, granted scopes, last used |
+| **AgentAction** (audit log) | 2 | Every agent tool call: tool, arguments, result, confirmed by, timestamp |
+| **PendingAction** | 2 | A sensitive agent action waiting for the Host's confirmation |
+| **Message** | 2 | Host or agent ↔ creator messages |
+| **CreatorAccount / CreatorProfile** | 3 | Creator login, niches, rates, connected social accounts, verified stats |
+| **CampaignListing** | 4 | Public brief, deliverables, budget and creator requirements for a campaign |
+| **Application** | 4 | A creator's application to a listing, with status and AI match score |
+| **Agreement / Payment** | 4 | Agreed fee and deliverables; payout status
 
 ---
 
@@ -126,21 +198,47 @@ Hookd Tracker is a web platform for UGC campaign managers to manage TikTok campa
 | US-27 | As a manager, I can update a creator's target through my AI assistant. | Extension |
 
 ### Future scope
-| ID | User story |
-|---|---|
-| US-28 | As a manager, I want new posts matched to campaigns by AI, even when the creator forgets the hashtag. |
-| US-29 | As a manager, I can review and correct the AI's post-to-campaign matches. |
-| US-30 | As a manager, I can read an AI-generated summary of each campaign's performance for client updates. |
-| US-31 | As a manager, I can get a drafted follow-up message for creators who are behind target. |
-| US-32 | As a manager, I can filter and sort dashboards by date range, creator or metric. |
-| US-33 | As a manager, I can export a campaign report (CSV or PDF) to share with my client. |
-| US-34 | As a manager, I get an alert when a creator falls behind target. |
-| US-35 | As a manager, I can invite teammates to my organisation with different roles. |
-| US-36 | As a creator, I can log in to see my targets and submitted posts. |
-| US-37 | As a manager, I can track creators on Instagram and YouTube as well as TikTok. |
-| US-38 | As a manager, I can record creator fees and payment status per campaign. |
+| ID | User story | Phase |
+|---|---|---|
+| US-28 | As a manager, I want new posts matched to campaigns by AI, even when the creator forgets the hashtag. | 2 |
+| US-29 | As a manager, I can review and correct the AI's post-to-campaign matches. | 2 |
+| US-30 | As a manager, I can read an AI-generated summary of each campaign's performance for client updates. | 2 |
+| US-31 | As a manager, I can get a drafted follow-up message for creators who are behind target. | 2 |
+| US-32 | As a manager, I can filter and sort dashboards by date range, creator or metric. | 2 |
+| US-33 | As a manager, I can export a campaign report (CSV or PDF) to share with my client. | 2 |
+| US-34 | As a manager, I get an alert when a creator falls behind target. | 2 |
+| US-35 | As a manager, I can invite teammates to my organisation with different roles. | 2 |
+| US-36 | As a creator, I can log in to see my targets and submitted posts. | 3 |
+| US-37 | As a manager, I can track creators on Instagram and YouTube as well as TikTok. | 3 |
+| US-38 | As a manager, I can record creator fees and payment status per campaign. | 2 |
 
-**Totals:** 22 MVP · 5 Extension · 11 Future
+#### Future: agent-native management (Phase 2)
+| ID | User story | Phase |
+|---|---|---|
+| US-39 | As a Host, I can connect my AI agent with scoped permissions (read-only or read-write), so it can only do what I allow. | 2 |
+| US-40 | As a Host, I want my agent to ask for my confirmation before sensitive actions (removing a creator, changing fees), so mistakes are caught. | 2 |
+| US-41 | As a Host, I can see an audit log of every action my agent took. | 2 |
+| US-42 | As a Host, I can create campaigns, assign creators and set targets entirely through my agent. | 2 |
+| US-43 | As a Host, I can ask my agent to message creators who are behind target, and the messages are sent through Hookd. | 2 |
+| US-44 | As a Host, I can ask my agent for a campaign report and get it without opening the dashboard. | 2 |
+
+#### Future: creator platform (Phase 3)
+| ID | User story | Phase |
+|---|---|---|
+| US-45 | As a creator, I can build a profile with my niches, rates and connected social accounts, with verified audience stats. | 3 |
+| US-46 | As a creator, I can read and reply to messages from Hosts about my campaigns. | 3 |
+
+#### Future: marketplace (Phase 4)
+| ID | User story | Phase |
+|---|---|---|
+| US-47 | As a Host, I can publish a campaign listing with a brief, deliverables, budget and creator requirements. | 4 |
+| US-48 | As a creator, I can browse campaign listings and apply to the ones that fit me. | 4 |
+| US-49 | As a Host, I get AI-ranked creator recommendations and applications for my campaign. | 4 |
+| US-50 | As a Host, I can accept an application so the creator joins my campaign with agreed targets and fees. | 4 |
+| US-51 | As a Host, I can ask my agent to shortlist applicants and invite the best matches. | 4 |
+| US-52 | As a Host, I can pay creators through Hookd when their deliverables are met. | 4 |
+
+**Totals:** 22 MVP · 5 Extension · 25 Future
 
 ---
 
@@ -165,6 +263,23 @@ Hookd Tracker is a web platform for UGC campaign managers to manage TikTok campa
 | `list_behind_target_creators` | Creators behind target this period |
 | `get_creator_performance` | One creator's posts and metrics across campaigns |
 | `update_creator_target` | Change a creator's target (write action) |
+
+In A3 the MCP server is an extension. In the long-term product it becomes the **main way Hosts manage creators**. The A3 tools are therefore treated as version 1 of that agent contract:
+- Tools call the public API with the user's token, with no private shortcuts. Every agent action follows the same organisation scoping and validation as the web app.
+- Tool names, descriptions and outputs are written for an LLM to read: plain language, explicit units and periods, and short summaries next to raw numbers.
+- Write tools return what changed (before → after), so the agent can confirm it to the Host.
+
+### Planned MCP tools (Phase 2+, not in A3)
+| Tool | Phase | Purpose |
+|---|---|---|
+| `create_campaign` / `update_campaign` | 2 | Run campaign setup from the agent |
+| `assign_creator` / `remove_creator_from_campaign` | 2 | Manage the campaign roster (removal needs confirmation) |
+| `message_creator` | 2 | Send a follow-up or brief to a creator through Hookd |
+| `get_campaign_report` | 2 | AI summary plus key metrics, ready for a client update |
+| `list_agent_actions` | 2 | The Host reviews what its agent has done |
+| `list_applications` / `accept_application` | 4 | Review and sign applicants |
+| `recommend_creators` | 4 | AI-ranked creators for a campaign listing |
+| `record_payment` | 4 | Mark deliverables paid |
 
 ---
 
@@ -355,6 +470,15 @@ hookd-tracker/
 | **TikTok API rate limits** | Queue-based sync with controlled concurrency, retries and backoff; sync only active campaigns |
 | **Cost** | Scale workers to minimum when idle, small instance sizes, cache aggressively, tear down non-demo environments |
 
+### Long-term risks (beyond A3)
+| Risk | Mitigation |
+|---|---|
+| **Agent takes a wrong or harmful action** (e.g. removes a creator, messages the wrong person) | Scoped agent permissions, Host confirmation for sensitive actions, full audit log, reversible writes where possible |
+| **Marketplace cold start**: no creators without Hosts, and no Hosts without creators | Launch management first (Phases 1–2) so Hosts bring their own creators; invite those creators to the platform in Phase 3 before opening the marketplace |
+| **Social platform data access** | Creator accounts connect their own social accounts via OAuth (Phase 3), giving first-party, consented access instead of scraping |
+| **MCP and agent ecosystem changes** | Keep MCP a thin layer over the REST API, so protocol changes only touch the MCP service |
+| **Creator privacy and payments compliance** | Store only consented creator data; use an established payments provider instead of handling funds directly |
+
 ---
 
 ## 13. Future Architecture Notes
@@ -365,3 +489,18 @@ The A3 design already supports the commercial roadmap:
 - **Teams and roles** → data already scoped by `organisation_id`; Cognito groups for roles.
 - **Alerts and exports** → triggered after each sync via the queue.
 - **Marketing site and SEO** → migrate the home page to Astro with features, pricing and blog pages.
+
+### Path to the AI-powered UGC platform
+| Phase | Architecture change | Builds on (A3) |
+|---|---|---|
+| 2: Agent-native management | MCP authorisation via OAuth (per the MCP spec) with per-agent scopes; `AgentAction` audit log; `PendingAction` records the Host approves in the web app or by email; per-agent rate limits | MCP server as its own service calling the API; Cognito JWTs; organisation scoping |
+| 2: Messaging and alerts | Notification service fed by SQS, sending email (SES) and in-app messages | SQS and worker pipeline |
+| 3: Creator platform | Separate Host and creator roles (Cognito groups or a second user pool); creator OAuth connections to TikTok, Instagram and YouTube | `platform` field; sync fetcher interface; Creator roster entries linked to accounts |
+| 4: Marketplace and matching | Listings and applications in RDS; creator and campaign embeddings (e.g. pgvector on RDS) for AI matching; LLM ranking and explanations | Stored captions and hashtags; post metrics history; worker pipeline |
+| 4: Payments | Payments provider integration (e.g. Stripe Connect) with payouts triggered by deliverables being met | CampaignCreator targets and post tracking as proof of delivery |
+
+**Design rules for A3 that keep this path open**
+1. Every feature goes through the REST API first. The web app and MCP server are both clients of it.
+2. All data stays scoped by `organisation_id` (the Host).
+3. Targets and deliverables live on the CampaignCreator relationship, not on the creator.
+4. Background work goes through queues, so AI, messaging and payment steps can be added as new consumers.
