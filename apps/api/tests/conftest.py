@@ -13,8 +13,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from hookd_api.deps import get_db, get_profile_fetcher, get_token_verifier
+from hookd_api.deps import (
+    get_campaign_repository,
+    get_db,
+    get_profile_fetcher,
+    get_token_verifier,
+)
 from hookd_api.main import app
+from hookd_api.repositories.campaigns import InMemoryCampaignRepository
 from hookd_api.security import CognitoProfile, CognitoTokenVerifier
 from hookd_core.models import Base
 
@@ -85,5 +91,19 @@ def client(
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_token_verifier] = lambda: verifier
     app.dependency_overrides[get_profile_fetcher] = lambda: profiles.__getitem__
+    campaign_repo = InMemoryCampaignRepository()
+    app.dependency_overrides[get_campaign_repository] = lambda: campaign_repo
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def login(make_token: Any, profiles: dict[str, CognitoProfile]) -> Any:
+    """login("alex") -> auth headers for a manager; the first API call provisions them."""
+
+    def _login(name: str = "alex") -> dict[str, str]:
+        token = _make_token(sub=f"sub-{name}")
+        profiles[token] = CognitoProfile(email=f"{name}@example.com", name=name.title())
+        return {"Authorization": f"Bearer {token}"}
+
+    return _login
