@@ -90,6 +90,7 @@ class CampaignProgress(BaseModel):
     creators: int
     posts: int
     target_posts: int = Field(description="Sum of every assigned creator's per-period target")
+    behind: int = Field(default=0, description="Creators behind target this period")
 
 
 class CampaignRead(BaseModel):
