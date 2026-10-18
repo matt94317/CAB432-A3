@@ -19,6 +19,7 @@ dist/
 # Terraform / CDK
 .terraform/
 *.tfstate*
+*.tfplan
 cdk.out/
 
 # OS / editor

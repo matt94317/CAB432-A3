@@ -2,6 +2,8 @@
 
 from mcp.server.mcpserver import MCPServer
 
+from hookd_mcp.config import settings
+
 mcp = MCPServer("Hookd Tracker")
 
 # TODO: register tools from hookd_mcp.tools.campaigns and hookd_mcp.tools.creators
@@ -9,7 +11,7 @@ mcp = MCPServer("Hookd Tracker")
 
 def main() -> None:
     # Stateless so any Fargate task can serve any request behind the ALB
-    mcp.run(transport="streamable-http", host="0.0.0.0", port=8001, stateless_http=True)
+    mcp.run(transport="streamable-http", host="0.0.0.0", port=settings.port, stateless_http=True)
 
 
 if __name__ == "__main__":
