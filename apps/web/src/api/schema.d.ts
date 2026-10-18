@@ -109,10 +109,183 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/creators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Creators
+         * @description The roster, by name. `search` matches name, handle or niche.
+         */
+        get: operations["list_creators_api_creators_get"];
+        put?: never;
+        /** Create Creator */
+        post: operations["create_creator_api_creators_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/creators/{creator_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Creator */
+        get: operations["get_creator_api_creators__creator_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Creator
+         * @description Remove from the roster. Also takes them off every campaign they're assigned to.
+         */
+        delete: operations["delete_creator_api_creators__creator_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Creator */
+        patch: operations["update_creator_api_creators__creator_id__patch"];
+        trace?: never;
+    };
+    "/api/creators/{creator_id}/campaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Creator Campaigns */
+        get: operations["list_creator_campaigns_api_creators__creator_id__campaigns_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaign_id}/creators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Assignments
+         * @description Creators on this campaign with their targets, by name.
+         */
+        get: operations["list_assignments_api_campaigns__campaign_id__creators_get"];
+        put?: never;
+        /**
+         * Assign Creators
+         * @description Assign roster creators with a starting target. All or nothing.
+         */
+        post: operations["assign_creators_api_campaigns__campaign_id__creators_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaign_id}/creators/{creator_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unassign Creator
+         * @description Take a creator off this campaign. They stay in the roster.
+         */
+        delete: operations["unassign_creator_api_campaigns__campaign_id__creators__creator_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Target
+         * @description Change a creator's target in this campaign when the deal changes.
+         */
+        patch: operations["update_target_api_campaigns__campaign_id__creators__creator_id__patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AssignedCreator */
+        AssignedCreator: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            platform: components["schemas"]["Platform"];
+            /** Handle */
+            handle: string;
+            /** Niche */
+            niche: string | null;
+        };
+        /**
+         * AssignmentCreate
+         * @description Assign one or more roster creators, all starting with the same target.
+         */
+        AssignmentCreate: {
+            /** Creator Ids */
+            creator_ids: string[];
+            /**
+             * Target Posts
+             * @description Posts the creator should publish per period
+             */
+            target_posts: number;
+            target_period: components["schemas"]["TargetPeriod"];
+        };
+        /** AssignmentRead */
+        AssignmentRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Campaign Id
+             * Format: uuid
+             */
+            campaign_id: string;
+            creator: components["schemas"]["AssignedCreator"];
+            /** Target Posts */
+            target_posts: number;
+            target_period: components["schemas"]["TargetPeriod"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * AssignmentUpdate
+         * @description Change a creator's target in this campaign. Only the fields sent are changed.
+         */
+        AssignmentUpdate: {
+            /** Target Posts */
+            target_posts?: number | null;
+            target_period?: components["schemas"]["TargetPeriod"] | null;
+        };
         /** CampaignCreate */
         CampaignCreate: {
             /** Name */
@@ -170,7 +343,7 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
-            /** @description Null until creators are assigned (Epic 3) */
+            /** @description Null until creators are assigned */
             progress?: components["schemas"]["CampaignProgress"] | null;
         };
         /**
@@ -180,14 +353,17 @@ export interface components {
         CampaignPhase: "upcoming" | "live" | "ended";
         /**
          * CampaignProgress
-         * @description Posts vs target across assigned creators. Filled in once assignments and posts exist.
+         * @description Posts vs target across assigned creators, for each creator's current target period.
          */
         CampaignProgress: {
             /** Creators */
             creators: number;
             /** Posts */
             posts: number;
-            /** Target Posts */
+            /**
+             * Target Posts
+             * @description Sum of every assigned creator's per-period target
+             */
             target_posts: number;
         };
         /** CampaignRead */
@@ -247,16 +423,114 @@ export interface components {
             /** Tracking Hashtags */
             tracking_hashtags?: string[] | null;
         };
+        /**
+         * CreatorCampaign
+         * @description One campaign a creator is assigned to, with their target in it.
+         */
+        CreatorCampaign: {
+            /**
+             * Campaign Id
+             * Format: uuid
+             */
+            campaign_id: string;
+            /** Name */
+            name: string;
+            /** Brand */
+            brand: string;
+            status: components["schemas"]["CampaignStatus"];
+            phase: components["schemas"]["CampaignPhase"];
+            /** Target Posts */
+            target_posts: number;
+            target_period: components["schemas"]["TargetPeriod"];
+        };
+        /** CreatorCreate */
+        CreatorCreate: {
+            /** Name */
+            name: string;
+            /**
+             * Handle
+             * @description TikTok handle, with or without '@', or a profile link
+             */
+            handle: string;
+            /** Niche */
+            niche?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+        };
+        /** CreatorRead */
+        CreatorRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            platform: components["schemas"]["Platform"];
+            /** Handle */
+            handle: string;
+            /** Profile Url */
+            profile_url: string;
+            /** Niche */
+            niche: string | null;
+            /** Email */
+            email: string | null;
+            /** Phone */
+            phone: string | null;
+            /**
+             * Campaign Count
+             * @description Campaigns this creator is assigned to
+             */
+            campaign_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * CreatorUpdate
+         * @description Partial update: only the fields sent are changed. Send null to clear an optional field.
+         */
+        CreatorUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Handle */
+            handle?: string | null;
+            /** Niche */
+            niche?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
         /**
+         * Platform
+         * @enum {string}
+         */
+        Platform: "tiktok";
+        /**
          * StatusFilter
          * @enum {string}
          */
         StatusFilter: "active" | "archived" | "all";
+        /**
+         * TargetPeriod
+         * @enum {string}
+         */
+        TargetPeriod: "week" | "month";
         /** UserRead */
         UserRead: {
             /**
@@ -585,6 +859,419 @@ export interface operations {
             };
             /** @description Campaign not found in your organisation */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_creators_api_creators_get: {
+        parameters: {
+            query?: {
+                search?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_creator_api_creators_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatorCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorRead"];
+                };
+            };
+            /** @description Another creator in your roster has this handle */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_creator_api_creators__creator_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorRead"];
+                };
+            };
+            /** @description Creator not found in your organisation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_creator_api_creators__creator_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Creator not found in your organisation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_creator_api_creators__creator_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatorUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorRead"];
+                };
+            };
+            /** @description Creator not found in your organisation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Another creator in your roster has this handle */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_creator_campaigns_api_creators__creator_id__campaigns_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorCampaign"][];
+                };
+            };
+            /** @description Creator not found in your organisation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_assignments_api_campaigns__campaign_id__creators_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentRead"][];
+                };
+            };
+            /** @description Campaign, creator or assignment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assign_creators_api_campaigns__campaign_id__creators_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignmentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentRead"][];
+                };
+            };
+            /** @description Campaign, creator or assignment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Campaign is archived, or a creator is already assigned */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unassign_creator_api_campaigns__campaign_id__creators__creator_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: string;
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Campaign, creator or assignment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Campaign is archived */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_target_api_campaigns__campaign_id__creators__creator_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: string;
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignmentUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentRead"];
+                };
+            };
+            /** @description Campaign, creator or assignment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Campaign is archived */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
