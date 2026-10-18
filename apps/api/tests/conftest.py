@@ -1,5 +1,11 @@
-"""Shared API test fixtures: in-memory database and locally signed Cognito-style tokens."""
+"""Shared API test fixtures: fresh stores, a fake TikTok and locally signed
+Cognito-style tokens.
 
+Stores are in-memory by default. HOOKD_TEST_STORAGE=dynamodb runs the same tests
+against the DynamoDB repositories on moto (CI does both).
+"""
+
+import os
 import time
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
@@ -11,17 +17,10 @@ import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from hookd_api.deps import (
-    get_assignment_repository,
-    get_campaign_repository,
-    get_creator_repository,
-    get_db,
-    get_post_repository,
     get_profile_fetcher,
+    get_storage,
     get_sync_runner,
     get_token_verifier,
 )
@@ -29,11 +28,7 @@ from hookd_api.main import app
 from hookd_api.security import CognitoProfile, CognitoTokenVerifier
 from hookd_api.services.sync import InlineSync
 from hookd_core.fetchers import FetchedPost, FetchError
-from hookd_core.models import Base
-from hookd_core.repositories.assignments import InMemoryAssignmentRepository
-from hookd_core.repositories.campaigns import InMemoryCampaignRepository
-from hookd_core.repositories.creators import InMemoryCreatorRepository
-from hookd_core.repositories.posts import InMemoryPostRepository
+from hookd_core.storage import Storage, make_storage
 
 USER_POOL_ID = "ap-southeast-2_TestPool"
 APP_CLIENT_ID = "test-client-id"
@@ -74,16 +69,6 @@ def verifier() -> CognitoTokenVerifier:
 
 
 @pytest.fixture
-def db_session_factory() -> Iterator[sessionmaker[Session]]:
-    engine = create_engine(
-        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
-    )
-    Base.metadata.create_all(engine)
-    yield sessionmaker(bind=engine, expire_on_commit=False)
-    engine.dispose()
-
-
-@pytest.fixture
 def profiles() -> dict[str, CognitoProfile]:
     """Cognito profiles by access token; tests register the tokens they use."""
     return {}
@@ -121,30 +106,33 @@ def tiktok() -> FakeTikTok:
 
 
 @pytest.fixture
+def storage(monkeypatch: pytest.MonkeyPatch) -> Iterator[Storage]:
+    if os.environ.get("HOOKD_TEST_STORAGE", "memory") == "memory":
+        yield make_storage("memory")
+        return
+    from moto import mock_aws
+
+    for var in ("AWS_ENDPOINT_URL", "AWS_PROFILE"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "testing")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "testing")
+    with mock_aws():
+        yield make_storage("dynamodb", table_name="hookd-test", create_table=True)
+
+
+@pytest.fixture
 def client(
-    db_session_factory: sessionmaker[Session],
     verifier: CognitoTokenVerifier,
     profiles: dict[str, CognitoProfile],
     tiktok: FakeTikTok,
+    storage: Storage,
 ) -> Iterator[TestClient]:
-    def override_get_db() -> Iterator[Session]:
-        with db_session_factory() as session:
-            yield session
-
-    app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_token_verifier] = lambda: verifier
     app.dependency_overrides[get_profile_fetcher] = lambda: profiles.__getitem__
 
-    # Fresh stores per test (a lambda default argument would become a query parameter)
-    def provide(store: object) -> Any:
-        return lambda: store
-
-    app.dependency_overrides[get_campaign_repository] = provide(InMemoryCampaignRepository())
-    app.dependency_overrides[get_creator_repository] = provide(InMemoryCreatorRepository())
-    app.dependency_overrides[get_assignment_repository] = provide(InMemoryAssignmentRepository())
-    app.dependency_overrides[get_post_repository] = provide(InMemoryPostRepository())
+    app.dependency_overrides[get_storage] = lambda: storage
     runner = InlineSync(tiktok, ZoneInfo("Australia/Brisbane"), lookback_days=30)
-    app.dependency_overrides[get_sync_runner] = provide(runner)
+    app.dependency_overrides[get_sync_runner] = lambda: runner
     yield TestClient(app)
     app.dependency_overrides.clear()
 

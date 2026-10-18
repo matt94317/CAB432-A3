@@ -10,7 +10,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    database_url: str = "postgresql+psycopg://hookd:hookd@localhost:5432/hookd"
     redis_url: str = "redis://localhost:6379/0"
     aws_region: str = "ap-southeast-2"
     aws_endpoint_url: str | None = None  # local SQS only; never used for Cognito
@@ -18,8 +17,14 @@ class Settings(BaseSettings):
     cognito_user_pool_id: str = ""
     cognito_app_client_id: str = ""
 
+    # "dynamodb" (A3) or "memory" (per process; quick local runs without DynamoDB)
+    storage: Literal["dynamodb", "memory"] = "dynamodb"
+    dynamodb_table: str = "hookd"
+    dynamodb_endpoint_url: str | None = None  # DynamoDB Local; unset in AWS
+    dynamodb_create_table: bool = False  # local only; Terraform creates it in AWS
+
     # "inline" runs "Sync now" in the API process; "queue" sends it to the worker over
-    # SQS. Inline until the API and worker share a database (the stores are in-memory).
+    # SQS. Queue needs a store both share (STORAGE=dynamodb).
     sync_mode: Literal["inline", "queue"] = "inline"
     sync_lookback_days: int = 30
     tiktok_mode: Literal["mock", "live"] = "mock"

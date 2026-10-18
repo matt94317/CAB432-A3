@@ -1,33 +1,20 @@
 """User lookup and first-login provisioning (US-01)."""
 
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
-
 from hookd_api.security import CognitoProfile
-from hookd_core.models import Organisation, User
+from hookd_core.repositories.users import Organisation, User, UserRepository
 
 
-def get_by_cognito_sub(db: Session, cognito_sub: str) -> User | None:
-    return db.scalars(select(User).where(User.cognito_sub == cognito_sub)).one_or_none()
+def get_by_cognito_sub(repo: UserRepository, cognito_sub: str) -> User | None:
+    return repo.get_by_cognito_sub(cognito_sub)
 
 
-def provision(db: Session, *, cognito_sub: str, profile: CognitoProfile) -> User:
+def provision(repo: UserRepository, *, cognito_sub: str, profile: CognitoProfile) -> User:
     """Create a user and their own organisation. Safe if two first requests race."""
     organisation = Organisation(name=f"{profile.name}'s organisation")
     user = User(
+        organisation_id=organisation.id,
         name=profile.name,
         email=profile.email,
         cognito_sub=cognito_sub,
-        organisation=organisation,
     )
-    db.add(user)
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        existing = get_by_cognito_sub(db, cognito_sub)
-        if existing is None:
-            raise
-        return existing
-    return user
+    return repo.create(user, organisation)

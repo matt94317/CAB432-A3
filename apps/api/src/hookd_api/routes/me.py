@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 from hookd_api.deps import CurrentUser
 from hookd_api.schemas.user import UserRead
-from hookd_core.models import User
+from hookd_core.repositories.users import User
 
 router = APIRouter(prefix="/me", tags=["me"])
 
