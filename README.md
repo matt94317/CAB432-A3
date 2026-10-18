@@ -48,20 +48,36 @@ Or run everything in containers: `docker compose up --build`.
 | New migration | `uv run alembic -c packages/core/alembic.ini revision --autogenerate -m "msg"` |
 | Regenerate API types | `npm run gen:api -w apps/web` (after changing API schemas or routes) |
 
+## Post sync
+
+Each creator's recent posts are fetched, matched to their campaigns by tracking
+hashtag (within the campaign dates), and upserted with their latest metrics.
+The logic is `hookd_core.sync`, shared by the API and the worker.
+
+| Setting | |
+|---|---|
+| `SYNC_MODE=inline` (default) | "Sync now" runs inside the API request. Needed while the stores are in-memory, because the worker can't see the API's data |
+| `SYNC_MODE=queue` | The API queues one job per creator on `SYNC_QUEUE_URL`; the worker syncs them. EventBridge sends `{"type":"scheduled_sync"}` to sync everyone on an active campaign |
+| `TIKTOK_MODE=mock` (default) | Deterministic fake posts that use the campaign hashtags; metrics grow between syncs |
+| `TIKTOK_MODE=live` | TikTok Research API (`TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`) |
+| `CAMPAIGN_TIMEZONE` | Campaign dates and weekly/monthly targets are days in this timezone (default `Australia/Brisbane`) |
+
+Posts the manager adds, moves or removes are marked `manual`: sync keeps their
+campaign and only refreshes metrics. Removed posts are kept flagged, so sync
+doesn't add them back.
+
 ## Testing with a real TikTok account
 
 There is no seeded demo data. For user testing, link a real TikTok account and
-let the sync worker pull its actual posts and metrics:
+let sync pull its actual posts and metrics:
 
 1. In `.env`, set `TIKTOK_MODE=live` and fill in `TIKTOK_CLIENT_KEY` and
-   `TIKTOK_CLIENT_SECRET` from the TikTok developer app.
+   `TIKTOK_CLIENT_SECRET` from a TikTok developer app with Research API access
+   (it reads other accounts' public videos).
 2. Create a campaign, add a creator using the test account's TikTok handle, and
    assign them with a posting target.
-3. Post to the test account using the campaign hashtag, then run a sync and
-   check the posts appear against the creator's target.
-
-`TIKTOK_MODE=mock` (the default) is still available for running locally
-without TikTok credentials.
+3. Post to the test account using the campaign hashtag, then press **Sync now**
+   on the campaign page and check the post appears.
 
 ## Troubleshooting
 
