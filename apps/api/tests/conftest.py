@@ -2,6 +2,7 @@
 
 import time
 from collections.abc import Iterator
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from typing import Any
 
@@ -14,13 +15,17 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from hookd_api.deps import (
+    get_assignment_repository,
     get_campaign_repository,
+    get_creator_repository,
     get_db,
     get_profile_fetcher,
     get_token_verifier,
 )
 from hookd_api.main import app
+from hookd_api.repositories.assignments import InMemoryAssignmentRepository
 from hookd_api.repositories.campaigns import InMemoryCampaignRepository
+from hookd_api.repositories.creators import InMemoryCreatorRepository
 from hookd_api.security import CognitoProfile, CognitoTokenVerifier
 from hookd_core.models import Base
 
@@ -91,8 +96,14 @@ def client(
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_token_verifier] = lambda: verifier
     app.dependency_overrides[get_profile_fetcher] = lambda: profiles.__getitem__
-    campaign_repo = InMemoryCampaignRepository()
-    app.dependency_overrides[get_campaign_repository] = lambda: campaign_repo
+
+    # Fresh stores per test (a lambda default argument would become a query parameter)
+    def provide(store: object) -> Any:
+        return lambda: store
+
+    app.dependency_overrides[get_campaign_repository] = provide(InMemoryCampaignRepository())
+    app.dependency_overrides[get_creator_repository] = provide(InMemoryCreatorRepository())
+    app.dependency_overrides[get_assignment_repository] = provide(InMemoryAssignmentRepository())
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -107,3 +118,42 @@ def login(make_token: Any, profiles: dict[str, CognitoProfile]) -> Any:
         return {"Authorization": f"Bearer {token}"}
 
     return _login
+
+
+@pytest.fixture
+def alex(login: Any) -> dict[str, str]:
+    return login("alex")
+
+
+@pytest.fixture
+def make_campaign(client: TestClient) -> Any:
+    """make_campaign(headers, **overrides) -> created campaign JSON (live, 30 days)."""
+
+    def _make(headers: dict[str, str], **overrides: Any) -> dict[str, Any]:
+        today = datetime.now(UTC).date()
+        body = {
+            "name": "Summer Glow",
+            "brand": "Lumi Skincare",
+            "start_date": today.isoformat(),
+            "end_date": (today + timedelta(days=30)).isoformat(),
+            "tracking_hashtags": ["lumiglow"],
+            **overrides,
+        }
+        response = client.post("/api/campaigns", json=body, headers=headers)
+        assert response.status_code == 201, response.text
+        return response.json()
+
+    return _make
+
+
+@pytest.fixture
+def make_creator(client: TestClient) -> Any:
+    """make_creator(headers, handle, **overrides) -> created creator JSON."""
+
+    def _make(headers: dict[str, str], handle: str = "lumi.lou", **overrides: Any) -> dict:
+        body = {"name": handle.title(), "handle": handle, **overrides}
+        response = client.post("/api/creators", json=body, headers=headers)
+        assert response.status_code == 201, response.text
+        return response.json()
+
+    return _make

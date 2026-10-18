@@ -8,7 +8,7 @@ from enum import StrEnum
 
 from fastapi import APIRouter, Response, status
 
-from hookd_api.deps import CampaignRepo, CurrentUser
+from hookd_api.deps import AssignmentRepo, CampaignRepo, CurrentUser
 from hookd_api.schemas.campaign import (
     CampaignCreate,
     CampaignListItem,
@@ -31,12 +31,13 @@ class StatusFilter(StrEnum):
 
 @router.get("", response_model=list[CampaignListItem])
 def list_campaigns(
-    user: CurrentUser, repo: CampaignRepo, status: StatusFilter = StatusFilter.ACTIVE
+    user: CurrentUser,
+    repo: CampaignRepo,
+    assignments: AssignmentRepo,
+    status: StatusFilter = StatusFilter.ACTIVE,
 ) -> list[CampaignListItem]:
     wanted = None if status == StatusFilter.ALL else CampaignStatus(status.value)
-    return [
-        service.to_list_item(c) for c in service.list_campaigns(repo, user.organisation_id, wanted)
-    ]
+    return service.list_campaigns(repo, assignments, user.organisation_id, wanted)
 
 
 @router.post("", response_model=CampaignRead, status_code=status.HTTP_201_CREATED)
@@ -73,6 +74,8 @@ def restore_campaign(campaign_id: uuid.UUID, user: CurrentUser, repo: CampaignRe
 
 
 @router.delete("/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT, responses=NOT_FOUND)
-def delete_campaign(campaign_id: uuid.UUID, user: CurrentUser, repo: CampaignRepo) -> Response:
-    service.delete(repo, user.organisation_id, campaign_id)
+def delete_campaign(
+    campaign_id: uuid.UUID, user: CurrentUser, repo: CampaignRepo, assignments: AssignmentRepo
+) -> Response:
+    service.delete(repo, assignments, user.organisation_id, campaign_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

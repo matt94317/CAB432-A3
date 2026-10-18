@@ -1,13 +1,16 @@
 """Campaign create, update, archive, delete and list (US-03 to US-06)."""
 
 import uuid
+from collections import defaultdict
 from dataclasses import replace
 
 from hookd_api.errors import Conflict, InvalidRequest, NotFound
+from hookd_api.repositories.assignments import Assignment, AssignmentRepository
 from hookd_api.repositories.campaigns import Campaign, CampaignRepository
 from hookd_api.schemas.campaign import (
     CampaignCreate,
     CampaignListItem,
+    CampaignProgress,
     CampaignRead,
     CampaignUpdate,
     campaign_phase,
@@ -42,9 +45,20 @@ def to_read(campaign: Campaign) -> CampaignRead:
     )
 
 
-def to_list_item(campaign: Campaign) -> CampaignListItem:
-    # TODO(Epic 3/4): fill progress from assignments and posts
-    return CampaignListItem(**to_read(campaign).model_dump(), progress=None)
+def progress(assignments: list[Assignment]) -> CampaignProgress | None:
+    """Creators and their combined per-period target; None until someone is assigned."""
+    if not assignments:
+        return None
+    # TODO(Epic 4): count each creator's posts in their current target period
+    return CampaignProgress(
+        creators=len(assignments),
+        posts=0,
+        target_posts=sum(a.target_posts for a in assignments),
+    )
+
+
+def to_list_item(campaign: Campaign, assignments: list[Assignment]) -> CampaignListItem:
+    return CampaignListItem(**to_read(campaign).model_dump(), progress=progress(assignments))
 
 
 def get(repo: CampaignRepository, organisation_id: uuid.UUID, campaign_id: uuid.UUID) -> Campaign:
@@ -55,9 +69,15 @@ def get(repo: CampaignRepository, organisation_id: uuid.UUID, campaign_id: uuid.
 
 
 def list_campaigns(
-    repo: CampaignRepository, organisation_id: uuid.UUID, status: CampaignStatus | None
-) -> list[Campaign]:
-    return repo.list(organisation_id, status)
+    repo: CampaignRepository,
+    assignments: AssignmentRepository,
+    organisation_id: uuid.UUID,
+    status: CampaignStatus | None,
+) -> list[CampaignListItem]:
+    by_campaign: dict[uuid.UUID, list[Assignment]] = defaultdict(list)
+    for assignment in assignments.list(organisation_id):
+        by_campaign[assignment.campaign_id].append(assignment)
+    return [to_list_item(c, by_campaign[c.id]) for c in repo.list(organisation_id, status)]
 
 
 def create(repo: CampaignRepository, organisation_id: uuid.UUID, data: CampaignCreate) -> Campaign:
@@ -105,7 +125,14 @@ def set_status(
     return repo.save(replace(campaign, status=status))
 
 
-def delete(repo: CampaignRepository, organisation_id: uuid.UUID, campaign_id: uuid.UUID) -> None:
-    # TODO(Epic 3/4): also delete the campaign's assignments and posts
-    if not repo.delete(organisation_id, campaign_id):
-        raise CampaignNotFound
+def delete(
+    repo: CampaignRepository,
+    assignments: AssignmentRepository,
+    organisation_id: uuid.UUID,
+    campaign_id: uuid.UUID,
+) -> None:
+    """Delete a campaign and its assignments. The creators stay in the roster."""
+    # TODO(Epic 4): also delete the campaign's posts
+    get(repo, organisation_id, campaign_id)
+    assignments.delete_where(organisation_id, campaign_id=campaign_id)
+    repo.delete(organisation_id, campaign_id)

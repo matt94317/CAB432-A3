@@ -1,5 +1,4 @@
-"""Shared enums. Still to add: Platform (tiktok), TargetPeriod (week/month),
-AssignmentStatus, MatchSource (hashtag/manual, later ai)."""
+"""Shared enums. Still to add: MatchSource (hashtag/manual, later ai)."""
 
 from enum import StrEnum
 
@@ -7,3 +6,13 @@ from enum import StrEnum
 class CampaignStatus(StrEnum):
     ACTIVE = "active"
     ARCHIVED = "archived"
+
+
+class Platform(StrEnum):
+    # Instagram and YouTube come later (US-37)
+    TIKTOK = "tiktok"
+
+
+class TargetPeriod(StrEnum):
+    WEEK = "week"
+    MONTH = "month"

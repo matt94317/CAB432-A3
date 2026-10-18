@@ -14,7 +14,12 @@ from sqlalchemy.orm import Session
 
 from hookd_api.config import settings
 from hookd_api.db import SessionLocal
+from hookd_api.repositories.assignments import (
+    AssignmentRepository,
+    InMemoryAssignmentRepository,
+)
 from hookd_api.repositories.campaigns import CampaignRepository, InMemoryCampaignRepository
+from hookd_api.repositories.creators import CreatorRepository, InMemoryCreatorRepository
 from hookd_api.security import (
     AuthError,
     CognitoProfile,
@@ -76,12 +81,24 @@ def get_current_user(
     return user
 
 
+# TODO: return the real stores once the A3 database is chosen (RDS or DynamoDB)
 @lru_cache
 def get_campaign_repository() -> CampaignRepository:
-    # TODO: return the real store once the A3 database is chosen (RDS or DynamoDB)
     return InMemoryCampaignRepository()
+
+
+@lru_cache
+def get_creator_repository() -> CreatorRepository:
+    return InMemoryCreatorRepository()
+
+
+@lru_cache
+def get_assignment_repository() -> AssignmentRepository:
+    return InMemoryAssignmentRepository()
 
 
 DbSession = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 CampaignRepo = Annotated[CampaignRepository, Depends(get_campaign_repository)]
+CreatorRepo = Annotated[CreatorRepository, Depends(get_creator_repository)]
+AssignmentRepo = Annotated[AssignmentRepository, Depends(get_assignment_repository)]
