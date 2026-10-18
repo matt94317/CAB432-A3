@@ -19,11 +19,6 @@ def campaign_body(**overrides):
 
 
 @pytest.fixture
-def alex(login):
-    return login("alex")
-
-
-@pytest.fixture
 def created(client, alex):
     response = client.post("/api/campaigns", json=campaign_body(), headers=alex)
     assert response.status_code == 201

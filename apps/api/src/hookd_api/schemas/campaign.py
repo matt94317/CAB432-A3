@@ -85,11 +85,11 @@ class CampaignUpdate(BaseModel):
 
 
 class CampaignProgress(BaseModel):
-    """Posts vs target across assigned creators. Filled in once assignments and posts exist."""
+    """Posts vs target across assigned creators, for each creator's current target period."""
 
     creators: int
     posts: int
-    target_posts: int
+    target_posts: int = Field(description="Sum of every assigned creator's per-period target")
 
 
 class CampaignRead(BaseModel):
@@ -107,5 +107,5 @@ class CampaignRead(BaseModel):
 
 class CampaignListItem(CampaignRead):
     progress: CampaignProgress | None = Field(
-        default=None, description="Null until creators are assigned (Epic 3)"
+        default=None, description="Null until creators are assigned"
     )
