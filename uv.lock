@@ -363,6 +363,12 @@ requires-dist = [
 name = "hookd-tracker"
 version = "0.1.0"
 source = { virtual = "." }
+dependencies = [
+    { name = "hookd-api" },
+    { name = "hookd-core" },
+    { name = "hookd-mcp" },
+    { name = "hookd-worker" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -372,6 +378,12 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "hookd-api", editable = "apps/api" },
+    { name = "hookd-core", editable = "packages/core" },
+    { name = "hookd-mcp", editable = "apps/mcp" },
+    { name = "hookd-worker", editable = "apps/worker" },
+]
 
 [package.metadata.requires-dev]
 dev = [
