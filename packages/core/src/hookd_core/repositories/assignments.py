@@ -38,6 +38,10 @@ class AssignmentRepository(Protocol):
         self, organisation_id: uuid.UUID, campaign_id: uuid.UUID, creator_id: uuid.UUID
     ) -> Assignment | None: ...
 
+    def list_all(self) -> list[Assignment]:
+        """Every organisation's assignments. Only for the scheduled sync fan-out."""
+        ...
+
     def list(
         self,
         organisation_id: uuid.UUID,
@@ -83,6 +87,9 @@ class InMemoryAssignmentRepository:
         if assignment is None or assignment.organisation_id != organisation_id:
             return None
         return assignment
+
+    def list_all(self) -> list[Assignment]:
+        return sorted(self._items.values(), key=lambda a: a.created_at)
 
     def list(
         self,

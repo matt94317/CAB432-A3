@@ -37,7 +37,8 @@ export default function DeleteCreatorDialog({ creator, onClose, onDeleted }: Del
       }
     >
       <p>
-        <span className="font-medium text-gray-900">{creator?.name}</span> will be removed from your roster.
+        <span className="font-medium text-gray-900">{creator?.name}</span> and their tracked posts will be removed
+        from your roster.
         {campaigns > 0 &&
           ` They'll also be taken off ${campaigns === 1 ? "the 1 campaign" : `all ${campaigns} campaigns`} they're assigned to.`}
       </p>

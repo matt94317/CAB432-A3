@@ -53,6 +53,7 @@ class AssignedCreator(BaseModel):
     platform: Platform
     handle: str
     niche: str | None
+    last_synced_at: datetime | None = Field(description="Null until their posts are first synced")
 
 
 class AssignmentRead(BaseModel):

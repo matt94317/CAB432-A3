@@ -3,10 +3,9 @@
 import uuid
 from collections import defaultdict
 from dataclasses import replace
+from datetime import date, datetime, tzinfo
 
 from hookd_api.errors import Conflict, InvalidRequest, NotFound
-from hookd_api.repositories.assignments import Assignment, AssignmentRepository
-from hookd_api.repositories.campaigns import Campaign, CampaignRepository
 from hookd_api.schemas.campaign import (
     CampaignCreate,
     CampaignListItem,
@@ -16,6 +15,10 @@ from hookd_api.schemas.campaign import (
     campaign_phase,
 )
 from hookd_core.enums import CampaignStatus
+from hookd_core.periods import current_period
+from hookd_core.repositories.assignments import Assignment, AssignmentRepository
+from hookd_core.repositories.campaigns import Campaign, CampaignRepository
+from hookd_core.repositories.posts import Post, PostRepository
 
 
 class CampaignNotFound(NotFound):
@@ -45,20 +48,30 @@ def to_read(campaign: Campaign) -> CampaignRead:
     )
 
 
-def progress(assignments: list[Assignment]) -> CampaignProgress | None:
-    """Creators and their combined per-period target; None until someone is assigned."""
+def progress(
+    campaign: Campaign, assignments: list[Assignment], posts: list[Post], today: date, tz: tzinfo
+) -> CampaignProgress | None:
+    """Posts in each creator's current target period vs their target, summed.
+
+    None until someone is assigned. Each creator counts up to their target, so one
+    creator posting extra doesn't hide another falling behind.
+    """
     if not assignments:
         return None
-    # TODO(Epic 4): count each creator's posts in their current target period
+    counted = 0
+    for a in assignments:
+        start, end = current_period(a.target_period, today, campaign.start_date, campaign.end_date)
+        posted = sum(
+            1
+            for p in posts
+            if p.creator_id == a.creator_id and start <= p.posted_at.astimezone(tz).date() <= end
+        )
+        counted += min(posted, a.target_posts)
     return CampaignProgress(
         creators=len(assignments),
-        posts=0,
+        posts=counted,
         target_posts=sum(a.target_posts for a in assignments),
     )
-
-
-def to_list_item(campaign: Campaign, assignments: list[Assignment]) -> CampaignListItem:
-    return CampaignListItem(**to_read(campaign).model_dump(), progress=progress(assignments))
 
 
 def get(repo: CampaignRepository, organisation_id: uuid.UUID, campaign_id: uuid.UUID) -> Campaign:
@@ -71,13 +84,26 @@ def get(repo: CampaignRepository, organisation_id: uuid.UUID, campaign_id: uuid.
 def list_campaigns(
     repo: CampaignRepository,
     assignments: AssignmentRepository,
+    posts: PostRepository,
     organisation_id: uuid.UUID,
     status: CampaignStatus | None,
+    tz: tzinfo,
 ) -> list[CampaignListItem]:
     by_campaign: dict[uuid.UUID, list[Assignment]] = defaultdict(list)
     for assignment in assignments.list(organisation_id):
         by_campaign[assignment.campaign_id].append(assignment)
-    return [to_list_item(c, by_campaign[c.id]) for c in repo.list(organisation_id, status)]
+    posts_by_campaign: dict[uuid.UUID, list[Post]] = defaultdict(list)
+    for post in posts.list(organisation_id):
+        posts_by_campaign[post.campaign_id].append(post)
+
+    today = datetime.now(tz).date()
+    return [
+        CampaignListItem(
+            **to_read(c).model_dump(),
+            progress=progress(c, by_campaign[c.id], posts_by_campaign[c.id], today, tz),
+        )
+        for c in repo.list(organisation_id, status)
+    ]
 
 
 def create(repo: CampaignRepository, organisation_id: uuid.UUID, data: CampaignCreate) -> Campaign:
@@ -128,11 +154,12 @@ def set_status(
 def delete(
     repo: CampaignRepository,
     assignments: AssignmentRepository,
+    posts: PostRepository,
     organisation_id: uuid.UUID,
     campaign_id: uuid.UUID,
 ) -> None:
-    """Delete a campaign and its assignments. The creators stay in the roster."""
-    # TODO(Epic 4): also delete the campaign's posts
+    """Delete a campaign, its assignments and its posts. The creators stay in the roster."""
     get(repo, organisation_id, campaign_id)
+    posts.delete_where(organisation_id, campaign_id=campaign_id)
     assignments.delete_where(organisation_id, campaign_id=campaign_id)
     repo.delete(organisation_id, campaign_id)

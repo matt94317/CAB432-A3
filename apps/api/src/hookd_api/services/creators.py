@@ -5,9 +5,6 @@ from collections import Counter
 from dataclasses import replace
 
 from hookd_api.errors import Conflict, NotFound
-from hookd_api.repositories.assignments import AssignmentRepository
-from hookd_api.repositories.campaigns import CampaignRepository
-from hookd_api.repositories.creators import Creator, CreatorRepository
 from hookd_api.schemas.campaign import campaign_phase
 from hookd_api.schemas.creator import (
     CreatorCampaign,
@@ -16,6 +13,10 @@ from hookd_api.schemas.creator import (
     CreatorUpdate,
     profile_url,
 )
+from hookd_core.repositories.assignments import AssignmentRepository
+from hookd_core.repositories.campaigns import CampaignRepository
+from hookd_core.repositories.creators import Creator, CreatorRepository
+from hookd_core.repositories.posts import PostRepository
 
 
 class CreatorNotFound(NotFound):
@@ -110,11 +111,13 @@ def update(
 def delete(
     repo: CreatorRepository,
     assignments: AssignmentRepository,
+    posts: PostRepository,
     organisation_id: uuid.UUID,
     creator_id: uuid.UUID,
 ) -> None:
-    """Remove a creator from the roster, along with every campaign assignment they have."""
+    """Remove a creator from the roster, with their campaign assignments and posts."""
     get(repo, organisation_id, creator_id)
+    posts.delete_where(organisation_id, creator_id=creator_id)
     assignments.delete_where(organisation_id, creator_id=creator_id)
     repo.delete(organisation_id, creator_id)
 

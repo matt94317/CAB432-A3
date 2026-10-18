@@ -67,7 +67,10 @@ export interface paths {
         get: operations["get_campaign_api_campaigns__campaign_id__get"];
         put?: never;
         post?: never;
-        /** Delete Campaign */
+        /**
+         * Delete Campaign
+         * @description Delete the campaign with its assignments and posts.
+         */
         delete: operations["delete_campaign_api_campaigns__campaign_id__delete"];
         options?: never;
         head?: never;
@@ -143,7 +146,7 @@ export interface paths {
         post?: never;
         /**
          * Delete Creator
-         * @description Remove from the roster. Also takes them off every campaign they're assigned to.
+         * @description Remove from the roster, with their campaign assignments and tracked posts.
          */
         delete: operations["delete_creator_api_creators__creator_id__delete"];
         options?: never;
@@ -205,7 +208,7 @@ export interface paths {
         post?: never;
         /**
          * Unassign Creator
-         * @description Take a creator off this campaign. They stay in the roster.
+         * @description Take a creator off this campaign, with their posts in it. They stay in the roster.
          */
         delete: operations["unassign_creator_api_campaigns__campaign_id__creators__creator_id__delete"];
         options?: never;
@@ -215,6 +218,74 @@ export interface paths {
          * @description Change a creator's target in this campaign when the deal changes.
          */
         patch: operations["update_target_api_campaigns__campaign_id__creators__creator_id__patch"];
+        trace?: never;
+    };
+    "/api/campaigns/{campaign_id}/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Campaign Posts
+         * @description Posts counting toward this campaign, newest first, with their latest metrics.
+         */
+        get: operations["list_campaign_posts_api_campaigns__campaign_id__posts_get"];
+        put?: never;
+        /**
+         * Add Post
+         * @description Add a post by link when sync missed it. Sync won't move or remove it.
+         */
+        post: operations["add_post_api_campaigns__campaign_id__posts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posts/{post_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove Post
+         * @description Stop counting a post toward its campaign. Sync won't add it back.
+         */
+        delete: operations["remove_post_api_posts__post_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Move Post
+         * @description Move a post to another campaign its creator is on.
+         */
+        patch: operations["move_post_api_posts__post_id__patch"];
+        trace?: never;
+    };
+    "/api/campaigns/{campaign_id}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync Campaign
+         * @description Pull the latest posts and metrics for every creator on this campaign now.
+         */
+        post: operations["sync_campaign_api_campaigns__campaign_id__sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -235,6 +306,11 @@ export interface components {
             handle: string;
             /** Niche */
             niche: string | null;
+            /**
+             * Last Synced At
+             * @description Null until their posts are first synced
+             */
+            last_synced_at: string | null;
         };
         /**
          * AssignmentCreate
@@ -517,15 +593,182 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         /**
+         * MatchSource
+         * @description How a post was linked to its campaign.
+         * @enum {string}
+         */
+        MatchSource: "hashtag" | "manual";
+        /**
          * Platform
          * @enum {string}
          */
         Platform: "tiktok";
         /**
+         * PostCreate
+         * @description A post the sync missed. The creator is found from the @handle in the link.
+         */
+        PostCreate: {
+            /** Url */
+            url: string;
+            /**
+             * Posted On
+             * Format: date
+             * @description Day it was posted, in the campaign timezone
+             */
+            posted_on: string;
+            /**
+             * Caption
+             * @description Hashtags are read from it
+             * @default
+             */
+            caption: string;
+            /**
+             * Views
+             * @default 0
+             */
+            views: number;
+            /**
+             * Likes
+             * @default 0
+             */
+            likes: number;
+            /**
+             * Comments
+             * @default 0
+             */
+            comments: number;
+            /**
+             * Shares
+             * @default 0
+             */
+            shares: number;
+        };
+        /** PostCreator */
+        PostCreator: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Handle */
+            handle: string;
+        };
+        /** PostMove */
+        PostMove: {
+            /**
+             * Campaign Id
+             * Format: uuid
+             * @description Campaign the post should count toward
+             */
+            campaign_id: string;
+        };
+        /** PostRead */
+        PostRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Campaign Id
+             * Format: uuid
+             */
+            campaign_id: string;
+            creator: components["schemas"]["PostCreator"];
+            platform: components["schemas"]["Platform"];
+            /** Url */
+            url: string;
+            /** Caption */
+            caption: string;
+            /** Hashtags */
+            hashtags: string[];
+            /**
+             * Posted At
+             * Format: date-time
+             */
+            posted_at: string;
+            /** Views */
+            views: number;
+            /** Likes */
+            likes: number;
+            /** Comments */
+            comments: number;
+            /** Shares */
+            shares: number;
+            /** @description hashtag: matched by sync; manual: set by you */
+            match_source: components["schemas"]["MatchSource"];
+            /**
+             * Last Synced At
+             * @description Null until sync has seen this post
+             */
+            last_synced_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
          * StatusFilter
          * @enum {string}
          */
         StatusFilter: "active" | "archived" | "all";
+        /** SyncFailure */
+        SyncFailure: {
+            /**
+             * Creator Id
+             * Format: uuid
+             */
+            creator_id: string;
+            /** Handle */
+            handle: string;
+            /** Error */
+            error: string;
+        };
+        /** SyncRun */
+        SyncRun: {
+            /**
+             * Mode
+             * @description inline: done now, counts are final. queued: the worker will sync shortly
+             * @enum {string}
+             */
+            mode: "inline" | "queued";
+            /**
+             * Creators
+             * @description Creators synced (inline) or queued
+             */
+            creators: number;
+            /**
+             * Added
+             * @default 0
+             */
+            added: number;
+            /**
+             * Updated
+             * @default 0
+             */
+            updated: number;
+            /**
+             * Removed
+             * @description Posts that no longer match a campaign
+             * @default 0
+             */
+            removed: number;
+            /**
+             * Failed
+             * @default []
+             */
+            failed: components["schemas"]["SyncFailure"][];
+            /** Finished At */
+            finished_at?: string | null;
+        };
         /**
          * TargetPeriod
          * @enum {string}
@@ -1264,6 +1507,226 @@ export interface operations {
                 };
             };
             /** @description Campaign, creator or assignment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Campaign is archived */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_campaign_posts_api_campaigns__campaign_id__posts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostRead"][];
+                };
+            };
+            /** @description Campaign or post not found in your organisation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_post_api_campaigns__campaign_id__posts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostRead"];
+                };
+            };
+            /** @description Campaign or post not found in your organisation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Campaign is archived, or the post is already tracked */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The post's creator isn't assigned to the campaign */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    remove_post_api_posts__post_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Campaign or post not found in your organisation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Campaign is archived */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    move_post_api_posts__post_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostMove"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostRead"];
+                };
+            };
+            /** @description Campaign or post not found in your organisation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Campaign is archived */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The post's creator isn't assigned to the campaign */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    sync_campaign_api_campaigns__campaign_id__sync_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncRun"];
+                };
+            };
+            /** @description Campaign not found in your organisation */
             404: {
                 headers: {
                     [name: string]: unknown;

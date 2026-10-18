@@ -5,6 +5,7 @@ import type { Campaign } from "@/api/queries/campaigns";
 import Alert from "@/components/ui/Alert";
 import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { formatRelative } from "@/lib/format";
 import { formatTarget } from "@/lib/targets";
 import AssignCreatorsDialog from "./AssignCreatorsDialog";
 import TargetEditor from "./TargetEditor";
@@ -69,6 +70,11 @@ export default function CampaignCreators({ campaign }: { campaign: Campaign }) {
                   @{assignment.creator.handle}
                   {assignment.creator.niche && ` · ${assignment.creator.niche}`}
                 </p>
+                <p className="text-xs text-gray-400">
+                  {assignment.creator.last_synced_at
+                    ? `Synced ${formatRelative(assignment.creator.last_synced_at)}`
+                    : "Not synced yet"}
+                </p>
               </div>
               <span className="text-sm text-gray-700">
                 {formatTarget(assignment.target_posts, assignment.target_period)}
@@ -112,7 +118,7 @@ export default function CampaignCreators({ campaign }: { campaign: Campaign }) {
       >
         <p>
           <span className="font-medium text-gray-900">{removing?.creator.name}</span> will be taken off{" "}
-          {campaign.name}. They stay in your roster.
+          {campaign.name}, and their posts in it will no longer be tracked. They stay in your roster.
         </p>
       </ConfirmDialog>
     </section>

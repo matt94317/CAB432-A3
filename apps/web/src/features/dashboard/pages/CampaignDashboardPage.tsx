@@ -6,10 +6,11 @@ import Button from "@/components/ui/Button";
 import CampaignCreators from "@/features/campaigns/components/CampaignCreators";
 import CampaignFormDialog from "@/features/campaigns/components/CampaignFormDialog";
 import CampaignStatusBadge from "@/features/campaigns/components/CampaignStatusBadge";
+import CampaignPosts from "@/features/posts/components/CampaignPosts";
 import { formatDateRange } from "@/lib/format";
 
-// Campaign dashboard (US-19, US-20, US-22). Shows the campaign and its creators with
-// their targets; posts, progress, totals and behind-target flags arrive with Epics 4 and 5.
+// Campaign dashboard (US-19, US-20, US-22). Shows the campaign, its creators with their
+// targets, and its posts; per-creator progress, totals and behind-target flags arrive with Epic 5.
 export default function CampaignDashboardPage() {
   const { campaignId = "" } = useParams();
   const campaign = useCampaign(campaignId);
@@ -55,6 +56,7 @@ export default function CampaignDashboardPage() {
           </div>
 
           <CampaignCreators campaign={campaign.data} />
+          <CampaignPosts campaign={campaign.data} />
 
           <CampaignFormDialog open={editing} campaign={campaign.data} onClose={() => setEditing(false)} />
         </>

@@ -5,6 +5,7 @@ Every query must be scoped to the current user's organisation_id
 """
 
 from collections.abc import Callable, Iterator
+from datetime import tzinfo
 from functools import lru_cache
 from typing import Annotated
 
@@ -14,12 +15,7 @@ from sqlalchemy.orm import Session
 
 from hookd_api.config import settings
 from hookd_api.db import SessionLocal
-from hookd_api.repositories.assignments import (
-    AssignmentRepository,
-    InMemoryAssignmentRepository,
-)
-from hookd_api.repositories.campaigns import CampaignRepository, InMemoryCampaignRepository
-from hookd_api.repositories.creators import CreatorRepository, InMemoryCreatorRepository
+from hookd_api.queue import make_publisher
 from hookd_api.security import (
     AuthError,
     CognitoProfile,
@@ -27,7 +23,17 @@ from hookd_api.security import (
     fetch_cognito_profile,
 )
 from hookd_api.services import users as users_service
+from hookd_api.services.sync import InlineSync, QueuedSync, SyncRunner
+from hookd_core.fetchers import make_fetcher
 from hookd_core.models import User
+from hookd_core.repositories.assignments import (
+    AssignmentRepository,
+    InMemoryAssignmentRepository,
+)
+from hookd_core.repositories.campaigns import CampaignRepository, InMemoryCampaignRepository
+from hookd_core.repositories.creators import CreatorRepository, InMemoryCreatorRepository
+from hookd_core.repositories.posts import InMemoryPostRepository, PostRepository
+from hookd_core.sync import Stores
 
 ProfileFetcher = Callable[[str], CognitoProfile]
 
@@ -97,8 +103,41 @@ def get_assignment_repository() -> AssignmentRepository:
     return InMemoryAssignmentRepository()
 
 
+@lru_cache
+def get_post_repository() -> PostRepository:
+    return InMemoryPostRepository()
+
+
+def get_stores(
+    campaigns: Annotated[CampaignRepository, Depends(get_campaign_repository)],
+    creators: Annotated[CreatorRepository, Depends(get_creator_repository)],
+    assignments: Annotated[AssignmentRepository, Depends(get_assignment_repository)],
+    posts: Annotated[PostRepository, Depends(get_post_repository)],
+) -> Stores:
+    """All four stores, for services that work across them (posts, sync, cascading deletes)."""
+    return Stores(campaigns=campaigns, creators=creators, assignments=assignments, posts=posts)
+
+
+def get_campaign_tz() -> tzinfo:
+    return settings.campaign_tz
+
+
+@lru_cache
+def get_sync_runner() -> SyncRunner:
+    if settings.sync_mode == "queue":
+        return QueuedSync(make_publisher())
+    fetcher = make_fetcher(
+        settings.tiktok_mode, settings.tiktok_client_key, settings.tiktok_client_secret
+    )
+    return InlineSync(fetcher, settings.campaign_tz, settings.sync_lookback_days)
+
+
 DbSession = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 CampaignRepo = Annotated[CampaignRepository, Depends(get_campaign_repository)]
 CreatorRepo = Annotated[CreatorRepository, Depends(get_creator_repository)]
 AssignmentRepo = Annotated[AssignmentRepository, Depends(get_assignment_repository)]
+PostRepo = Annotated[PostRepository, Depends(get_post_repository)]
+AllStores = Annotated[Stores, Depends(get_stores)]
+CampaignTz = Annotated[tzinfo, Depends(get_campaign_tz)]
+Syncer = Annotated[SyncRunner, Depends(get_sync_runner)]

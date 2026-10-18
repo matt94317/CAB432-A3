@@ -52,7 +52,7 @@ export default function CampaignCard({ campaign, busy, onEdit, onArchiveToggle, 
             <div className="flex justify-between text-gray-600">
               <span>{progress.creators} creators</span>
               <span>
-                {progress.posts} / {progress.target_posts} posts
+                {progress.posts} / {progress.target_posts} posts this period
               </span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-100">
