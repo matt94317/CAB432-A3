@@ -268,6 +268,29 @@ export interface paths {
         patch: operations["move_post_api_posts__post_id__patch"];
         trace?: never;
     };
+    "/api/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Workspace Overview
+         * @description Everything at a glance for one month (default: this month), compared with the
+         *     month before. For the current month, the comparison is the same days last month.
+         *
+         *     Cached; any change to your data refreshes it. `X-Cache: hit|miss` says which.
+         */
+        get: operations["workspace_overview_api_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaign_id}/dashboard": {
         parameters: {
             query?: never;
@@ -354,6 +377,39 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActiveCampaign */
+        ActiveCampaign: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Brand */
+            brand: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /** Creators */
+            creators: number;
+            /**
+             * Posts
+             * @description Posts this period, each creator capped at their target
+             */
+            posts: number;
+            /** Target Posts */
+            target_posts: number;
+            /** Behind */
+            behind: number;
+        };
         /** AssignedCreator */
         AssignedCreator: {
             /**
@@ -423,6 +479,26 @@ export interface components {
             /** Target Posts */
             target_posts?: number | null;
             target_period?: components["schemas"]["TargetPeriod"] | null;
+        };
+        /** AttentionItem */
+        AttentionItem: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "behind" | "ending_soon" | "no_creators" | "not_synced";
+            /**
+             * Title
+             * @description e.g. '2 creators behind target'
+             */
+            title: string;
+            /**
+             * Detail
+             * @description Usually the campaign name
+             */
+            detail: string;
+            /** Campaign Id */
+            campaign_id?: string | null;
         };
         /** BehindTargetItem */
         BehindTargetItem: {
@@ -869,6 +945,107 @@ export interface components {
              */
             engagement_rate: number | null;
         };
+        /** Milestone */
+        Milestone: {
+            /**
+             * Campaign Id
+             * Format: uuid
+             */
+            campaign_id: string;
+            /** Name */
+            name: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+        };
+        /** Overview */
+        Overview: {
+            /**
+             * Month
+             * @description YYYY-MM
+             */
+            month: string;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             * @description Last day counted: today for the current month
+             */
+            period_end: string;
+            /**
+             * Compare Start
+             * Format: date
+             */
+            compare_start: string;
+            /**
+             * Compare End
+             * Format: date
+             */
+            compare_end: string;
+            /**
+             * Comparing
+             * @description same_days: month to date vs the same days last month
+             * @enum {string}
+             */
+            comparing: "same_days" | "full_month";
+            /**
+             * Today
+             * Format: date
+             */
+            today: string;
+            /** @description Posts published in the period */
+            totals: components["schemas"]["Metrics"];
+            /** @description The comparison period */
+            previous: components["schemas"]["Metrics"];
+            /**
+             * Active Creators
+             * @description Creators on campaigns running in the period
+             */
+            active_creators: number;
+            /** Previous Active Creators */
+            previous_active_creators: number;
+            /**
+             * New Creators
+             * @description Creators first assigned in the period
+             */
+            new_creators: number;
+            /** Daily */
+            daily: components["schemas"]["DailyMetrics"][];
+            /**
+             * Previous Daily
+             * @description The whole previous month
+             */
+            previous_daily: components["schemas"]["DailyMetrics"][];
+            /** Needs Attention */
+            needs_attention: components["schemas"]["AttentionItem"][];
+            /**
+             * Active Campaigns
+             * @description Live now, ending soonest first
+             */
+            active_campaigns: components["schemas"]["ActiveCampaign"][];
+            next_milestone: components["schemas"]["Milestone"] | null;
+            /**
+             * Standout Creators
+             * @description Top 3 by views in the period
+             */
+            standout_creators: components["schemas"]["StandoutCreator"][];
+            /**
+             * Last Synced At
+             * @description Most recent creator sync
+             */
+            last_synced_at: string | null;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+        };
         /**
          * Platform
          * @enum {string}
@@ -991,6 +1168,24 @@ export interface components {
          * @enum {string}
          */
         ProgressStatus: "met" | "on_track" | "behind" | "upcoming";
+        /** StandoutCreator */
+        StandoutCreator: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Handle */
+            handle: string;
+            /** Posts */
+            posts: number;
+            /** Views */
+            views: number;
+            /** Engagement Rate */
+            engagement_rate: number | null;
+        };
         /**
          * StatusFilter
          * @enum {string}
@@ -1974,6 +2169,35 @@ export interface operations {
                 content?: never;
             };
             /** @description The post's creator isn't assigned to the campaign */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    workspace_overview_api_overview_get: {
+        parameters: {
+            query?: {
+                month?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Overview"];
+                };
+            };
+            /** @description month isn't YYYY-MM */
             422: {
                 headers: {
                     [name: string]: unknown;

@@ -9,6 +9,7 @@ import CampaignListPage from "@/features/campaigns/pages/CampaignListPage";
 import CreatorDetailPage from "@/features/creators/pages/CreatorDetailPage";
 import CreatorListPage from "@/features/creators/pages/CreatorListPage";
 import CampaignDashboardPage from "@/features/dashboard/pages/CampaignDashboardPage";
+import OverviewPage from "@/features/overview/pages/OverviewPage";
 
 export default function App() {
   return (
@@ -20,7 +21,8 @@ export default function App() {
       </Route>
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route index element={<Navigate to="/campaigns" replace />} />
+          <Route index element={<Navigate to="/overview" replace />} />
+          <Route path="/overview" element={<OverviewPage />} />
           <Route path="/campaigns" element={<CampaignListPage />} />
           <Route path="/campaigns/:campaignId" element={<CampaignDashboardPage />} />
           <Route path="/creators" element={<CreatorListPage />} />
