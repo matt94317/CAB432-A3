@@ -69,8 +69,8 @@ scripts/deploy.sh worker     # tasks read secrets at start
 ```
 
 Useful outputs: `terraform output app_url`, and
-`terraform output -raw gradescope_infra_yaml > submission-a3-infra.yml` for the
-Gradescope submission.
+`terraform output -raw gradescope_infra_yaml > ../../../../submission-a3-infra.yml` to
+refresh the Gradescope file at the repo root.
 
 ## CAB432 constraints
 

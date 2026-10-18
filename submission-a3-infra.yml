@@ -3,7 +3,7 @@
 # Values marked "<after apply: ...>" get a random ID from AWS when created. After
 # `terraform apply`, regenerate this whole file from the real resources:
 #   cd infra/terraform/envs/cab432
-#   terraform output -raw gradescope_infra_yaml > ../../../submission-a3-infra.yml
+#   terraform output -raw gradescope_infra_yaml > ../../../../submission-a3-infra.yml
 # TODO: add the database table(s) once the A3 database is decided.
 
 cloudInfrastructure:
