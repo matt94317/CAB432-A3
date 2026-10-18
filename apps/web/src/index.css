@@ -2,7 +2,36 @@
 @import "@hookd/ui/tokens.css";
 
 @theme inline {
+  --font-sans: var(--hk-font-sans);
+
   --color-brand: var(--hk-color-accent);
+  --color-brand-soft: var(--hk-color-accent-soft);
+  --color-brand-muted: var(--hk-color-accent-muted);
+
+  --color-canvas: var(--hk-color-canvas);
+  --color-surface: var(--hk-color-surface);
+  --color-sunken: var(--hk-color-surface-sunken);
+  --color-line: var(--hk-color-line);
+  --color-line-strong: var(--hk-color-line-strong);
+  --color-warm: var(--hk-color-warm);
+
+  --color-ink: var(--hk-color-fg);
+  --color-ink-muted: var(--hk-color-fg-muted);
+  --color-ink-subtle: var(--hk-color-fg-subtle);
+
   --color-on-target: var(--hk-color-on-target);
+  --color-on-target-soft: var(--hk-color-on-target-soft);
   --color-behind: var(--hk-color-behind);
+  --color-behind-soft: var(--hk-color-behind-soft);
+  --color-danger: var(--hk-color-danger);
+  --color-danger-soft: var(--hk-color-danger-soft);
+
+  --radius-card: var(--hk-radius-card);
+}
+
+body {
+  background: var(--hk-color-canvas);
+  color: var(--hk-color-fg);
+  font-family: var(--hk-font-sans);
+  -webkit-font-smoothing: antialiased;
 }

@@ -56,7 +56,7 @@ function AddPostForm({ campaignId, onClose }: Omit<AddPostDialogProps, "open">) 
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-ink-muted">
         For a post sync missed, for example when the creator forgot the hashtag. Sync won't move or remove posts you
         add here.
       </p>
@@ -86,7 +86,7 @@ function AddPostForm({ campaignId, onClose }: Omit<AddPostDialogProps, "open">) 
         onChange={(e) => setCaption(e.target.value)}
       />
       <fieldset>
-        <legend className="text-sm font-medium text-gray-900">Metrics (optional)</legend>
+        <legend className="text-sm font-medium text-ink">Metrics (optional)</legend>
         <div className="mt-1.5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {METRICS.map(({ key, label }) => (
             <TextField

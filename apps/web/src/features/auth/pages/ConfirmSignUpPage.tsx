@@ -72,22 +72,24 @@ export default function ConfirmSignUpPage() {
 
   return (
     <AuthLayout
+      eyebrow="ONE LAST STEP"
       title="Check your email"
-      subtitle="Enter the 6-digit code we sent to confirm your account."
+      subtitle={`Enter the 6-digit code we sent${email ? ` to ${email}` : ""} to confirm your account.`}
       footer={
-        <Link to="/login" className="font-medium text-brand hover:underline">
+        <Link to="/login" className="font-semibold text-brand hover:underline">
           Back to log in
         </Link>
       }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
         {!state.email && (
           <TextField
-            label="Email"
+            label="Work email"
             type="email"
             autoComplete="email"
+            fieldSize="lg"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -97,6 +99,7 @@ export default function ConfirmSignUpPage() {
           label="Confirmation code"
           inputMode="numeric"
           autoComplete="one-time-code"
+          fieldSize="lg"
           required
           value={code}
           onChange={(e) => setCode(e.target.value)}

@@ -4,6 +4,8 @@ import { useCampaign } from "@/api/queries/campaigns";
 import { useCampaignDashboard } from "@/api/queries/dashboard";
 import Alert from "@/components/ui/Alert";
 import Button from "@/components/ui/Button";
+import Icon from "@/components/ui/Icon";
+import PageHeader from "@/components/ui/PageHeader";
 import CampaignCreators from "@/features/campaigns/components/CampaignCreators";
 import CampaignFormDialog from "@/features/campaigns/components/CampaignFormDialog";
 import CampaignStatusBadge from "@/features/campaigns/components/CampaignStatusBadge";
@@ -14,8 +16,8 @@ import CampaignTotals from "../components/CampaignTotals";
 // Recharts is large; load it only when a dashboard has a chart to draw
 const MetricsChart = lazy(() => import("../components/MetricsChart"));
 
-// Campaign dashboard: totals and daily views (US-20), each creator's posts vs target
-// with behind-target flags (US-19, US-22), and the campaign's posts.
+// Campaign dashboard: totals and running performance (US-20), each creator's posts vs
+// target with behind-target flags (US-19, US-22), and the campaign's posts.
 export default function CampaignDashboardPage() {
   const { campaignId = "" } = useParams();
   const campaign = useCampaign(campaignId);
@@ -23,56 +25,59 @@ export default function CampaignDashboardPage() {
   const [editing, setEditing] = useState(false);
 
   return (
-    <div className="px-4 py-6 sm:px-6">
-      <Link to="/campaigns" className="text-sm text-gray-500 hover:text-gray-900">
-        ← All campaigns
+    <div className="flex flex-col gap-[26px]">
+      <Link to="/campaigns" className="inline-flex w-fit items-center gap-1 text-xs text-ink-muted hover:text-ink">
+        <Icon name="chevron-right" className="size-3 rotate-180" />
+        All campaigns
       </Link>
 
-      {campaign.isPending && <p className="mt-6 text-sm text-gray-500">Loading campaign…</p>}
-      {campaign.isError && (
-        <div className="mt-6">
-          <Alert>{campaign.error.message}</Alert>
-        </div>
-      )}
+      {campaign.isPending && <p className="text-[13px] text-ink-muted">Loading campaign…</p>}
+      {campaign.isError && <Alert>{campaign.error.message}</Alert>}
 
       {campaign.data && (
         <>
-          <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-semibold text-gray-900">{campaign.data.name}</h1>
+          <PageHeader
+            title={
+              <span className="flex flex-wrap items-center gap-3">
+                {campaign.data.name}
                 <CampaignStatusBadge campaign={campaign.data} />
-              </div>
-              <p className="mt-1 text-sm text-gray-500">
-                {campaign.data.brand} · {formatDateRange(campaign.data.start_date, campaign.data.end_date)}
-              </p>
-              <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Tracking hashtags">
-                {campaign.data.tracking_hashtags.map((tag) => (
-                  <li key={tag} className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                    #{tag}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {campaign.data.status === "active" && (
-              <Button variant="secondary" onClick={() => setEditing(true)}>
-                Edit campaign
-              </Button>
-            )}
-          </div>
+              </span>
+            }
+            description={
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="uppercase tracking-wide">{campaign.data.brand}</span>
+                <span aria-hidden="true">·</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon name="calendar" className="size-3" />
+                  {formatDateRange(campaign.data.start_date, campaign.data.end_date)}
+                </span>
+              </span>
+            }
+            actions={
+              campaign.data.status === "active" && (
+                <Button variant="secondary" onClick={() => setEditing(true)}>
+                  Edit campaign
+                </Button>
+              )
+            }
+          >
+            <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Tracking hashtags">
+              {campaign.data.tracking_hashtags.map((tag) => (
+                <li key={tag} className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[11px] text-brand">
+                  #{tag}
+                </li>
+              ))}
+            </ul>
+          </PageHeader>
 
-          {dashboard.isError && (
-            <div className="mt-6">
-              <Alert>{dashboard.error.message}</Alert>
-            </div>
-          )}
+          {dashboard.isError && <Alert>{dashboard.error.message}</Alert>}
           {dashboard.data && dashboard.data.creators.length > 0 && (
-            <div className="mt-6 flex flex-col gap-4">
+            <>
               <CampaignTotals totals={dashboard.data.totals} />
-              <Suspense fallback={<div className="h-72 rounded-xl border border-gray-200 bg-white" />}>
+              <Suspense fallback={<div className="h-[340px] rounded-card border border-line bg-surface" />}>
                 <MetricsChart daily={dashboard.data.daily} />
               </Suspense>
-            </div>
+            </>
           )}
 
           <CampaignCreators campaign={campaign.data} />

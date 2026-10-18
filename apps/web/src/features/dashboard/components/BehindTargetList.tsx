@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useBehindTarget } from "@/api/queries/dashboard";
 import Alert from "@/components/ui/Alert";
+import Avatar from "@/components/ui/Avatar";
+import Badge from "@/components/ui/Badge";
 import PeriodProgress from "./PeriodProgress";
 
 // Who to chase: creators behind target this period on any live campaign (US-22).
@@ -11,28 +13,25 @@ export default function BehindTargetList() {
   if (!behind.data || behind.data.length === 0) return null;
 
   return (
-    <section className="rounded-xl border border-red-200 bg-white shadow-sm" aria-labelledby="behind-heading">
-      <h2 id="behind-heading" className="border-b border-red-100 px-4 py-3 text-sm font-semibold text-gray-900">
-        <span aria-hidden="true" className="mr-1.5 text-behind">
-          !
-        </span>
-        Behind target this period ({behind.data.length})
-      </h2>
-      <ul className="divide-y divide-gray-100">
+    <section className="rounded-card border border-line bg-surface p-[22px]" aria-labelledby="behind-heading">
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 id="behind-heading" className="text-base text-ink">
+          Needs your attention
+        </h2>
+        <Badge tone="warning">
+          {behind.data.length} behind target this period
+        </Badge>
+      </div>
+      <ul className="mt-3 divide-y divide-line">
         {behind.data.map((item) => (
-          <li
-            key={`${item.campaign_id}-${item.creator.id}`}
-            className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3"
-          >
+          <li key={`${item.campaign_id}-${item.creator.id}`} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
+            <Avatar name={item.creator.name} />
             <div className="min-w-0 flex-1">
-              <Link
-                to={`/creators/${item.creator.id}`}
-                className="block truncate font-medium text-gray-900 hover:text-brand"
-              >
+              <Link to={`/creators/${item.creator.id}`} className="block truncate text-[13px] text-ink hover:text-brand">
                 {item.creator.name}
               </Link>
-              <p className="truncate text-sm text-gray-500">
-                <Link to={`/campaigns/${item.campaign_id}`} className="hover:text-gray-900">
+              <p className="truncate text-[11px] text-ink-muted">
+                <Link to={`/campaigns/${item.campaign_id}`} className="hover:text-ink">
                   {item.campaign_name}
                 </Link>{" "}
                 · {item.remaining} more this {item.target_period}
@@ -40,7 +39,7 @@ export default function BehindTargetList() {
             </div>
             <PeriodProgress progress={item} />
             {item.email && (
-              <a href={`mailto:${item.email}`} className="text-sm text-brand underline-offset-4 hover:underline">
+              <a href={`mailto:${item.email}`} className="text-xs font-semibold text-brand hover:underline">
                 Email
               </a>
             )}

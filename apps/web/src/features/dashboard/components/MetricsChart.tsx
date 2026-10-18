@@ -1,54 +1,96 @@
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useState } from "react";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { DailyMetrics } from "@/api/queries/dashboard";
 import { formatCount, formatDate, formatExact } from "@/lib/format";
 
-// Views by posting day: one series, so no legend; posts and engagement are in the
-// tooltip and the table rather than on a second axis.
+const MEASURES = [
+  { key: "views", label: "Views" },
+  { key: "engagement", label: "Engagement" },
+  { key: "posts", label: "Posts" },
+] as const;
+
+type Measure = (typeof MEASURES)[number]["key"];
+
+// The design's "Content performance" card: one running-total line per measure
+// (views, engagement or posts of the campaign's posts, by posting day). One series, so
+// no legend; the tab names it. Exact daily numbers are in the tooltip and the table.
 export default function MetricsChart({ daily }: { daily: DailyMetrics[] }) {
+  const [measure, setMeasure] = useState<Measure>("views");
   if (daily.length === 0 || daily.every((d) => d.posts === 0)) return null;
 
+  let running = { views: 0, engagement: 0, posts: 0 };
+  const series = daily.map((day) => {
+    running = {
+      views: running.views + day.views,
+      engagement: running.engagement + day.engagement,
+      posts: running.posts + day.posts,
+    };
+    return { ...day, total: running[measure] };
+  });
+  const label = MEASURES.find((m) => m.key === measure)!.label;
+
   return (
-    <figure className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <figcaption className="text-sm font-medium text-gray-900">Views by posting day</figcaption>
-      <p className="text-xs text-gray-500">Current views of the posts published each day</p>
-      <div className="mt-3 h-56">
+    <figure className="flex flex-col gap-5 rounded-card border border-line bg-surface p-[22px]">
+      <figcaption className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="text-base text-ink">Content performance</span>
+        <span className="text-[10px] text-ink-muted">Running total by posting day</span>
+      </figcaption>
+      <div className="flex gap-[18px] text-xs" role="tablist" aria-label="Measure">
+        {MEASURES.map((m) => (
+          <button
+            key={m.key}
+            role="tab"
+            aria-selected={measure === m.key}
+            onClick={() => setMeasure(m.key)}
+            className={measure === m.key ? "font-semibold text-brand" : "text-ink-muted hover:text-ink"}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+      <div className="h-[200px]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={daily} margin={{ top: 4, right: 4, bottom: 0, left: 0 }} barCategoryGap={2}>
-            <CartesianGrid vertical={false} stroke="#e5e7eb" strokeWidth={1} />
+          <LineChart data={series} margin={{ top: 6, right: 6, bottom: 0, left: 0 }}>
+            <CartesianGrid vertical={false} stroke="var(--hk-color-line)" strokeWidth={1} />
             <XAxis
               dataKey="date"
               tickFormatter={(d: string) => formatDate(d).replace(/,? \d{4}$/, "")}
-              tick={{ fontSize: 11, fill: "#6b7280" }}
+              tick={{ fontSize: 10, fill: "var(--hk-color-fg-subtle)" }}
               tickLine={false}
-              axisLine={{ stroke: "#e5e7eb" }}
-              minTickGap={24}
+              axisLine={false}
+              minTickGap={32}
             />
             <YAxis
               tickFormatter={(v: number) => formatCount(v)}
-              tick={{ fontSize: 11, fill: "#6b7280" }}
+              tick={{ fontSize: 10, fill: "var(--hk-color-fg-subtle)" }}
               tickLine={false}
               axisLine={false}
-              width={40}
+              width={36}
               allowDecimals={false}
             />
-            <Tooltip cursor={{ fill: "#f3f4f6" }} content={<DayTooltip />} />
-            {/* No grow-in animation: the dashboard refetches after every change, and replaying
-                it each time is distracting. Fill uses the token: @theme inline emits no --color-brand */}
-            <Bar
-              dataKey="views"
-              fill="var(--hk-color-accent)"
-              maxBarSize={24}
-              radius={[4, 4, 0, 0]}
+            <Tooltip
+              cursor={{ stroke: "var(--hk-color-line-strong)", strokeWidth: 1 }}
+              content={<DayTooltip label={label} />}
+            />
+            {/* No draw-in animation: the dashboard refetches after every change */}
+            <Line
+              type="monotone"
+              dataKey="total"
+              stroke="var(--hk-color-accent)"
+              strokeWidth={2}
+              strokeLinecap="round"
+              dot={false}
+              activeDot={{ r: 4, fill: "var(--hk-color-accent)", stroke: "var(--hk-color-surface)", strokeWidth: 2 }}
               isAnimationActive={false}
             />
-          </BarChart>
+          </LineChart>
         </ResponsiveContainer>
       </div>
-      <details className="mt-2 text-xs text-gray-600">
-        <summary className="cursor-pointer text-gray-500 hover:text-gray-900">Show as table</summary>
+      <details className="text-xs text-ink-muted">
+        <summary className="cursor-pointer hover:text-ink">Show as table</summary>
         <div className="mt-2 max-h-48 overflow-y-auto">
           <table className="w-full text-left">
-            <thead className="text-gray-500">
+            <thead>
               <tr>
                 <th className="py-1 font-medium">Day</th>
                 <th className="py-1 text-right font-medium">Posts</th>
@@ -60,7 +102,7 @@ export default function MetricsChart({ daily }: { daily: DailyMetrics[] }) {
               {daily
                 .filter((d) => d.posts > 0)
                 .map((d) => (
-                  <tr key={d.date} className="border-t border-gray-100">
+                  <tr key={d.date} className="border-t border-line">
                     <td className="py-1">{formatDate(d.date)}</td>
                     <td className="py-1 text-right">{d.posts}</td>
                     <td className="py-1 text-right">{formatExact(d.views)}</td>
@@ -75,16 +117,26 @@ export default function MetricsChart({ daily }: { daily: DailyMetrics[] }) {
   );
 }
 
-function DayTooltip({ active, payload }: { active?: boolean; payload?: { payload: DailyMetrics }[] }) {
+function DayTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { payload: DailyMetrics & { total: number } }[];
+  label: string;
+}) {
   const day = active ? payload?.[0]?.payload : undefined;
   if (!day) return null;
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
-      <p className="font-medium text-gray-900">{formatDate(day.date)}</p>
-      <p className="mt-1 text-gray-600">
-        {formatExact(day.views)} views · {day.posts} {day.posts === 1 ? "post" : "posts"}
+    <div className="rounded-lg border border-line bg-surface px-3 py-2 text-[11px] shadow-md">
+      <p className="font-medium text-ink">{formatDate(day.date)}</p>
+      <p className="mt-1 text-ink-muted">
+        {label} so far: <span className="text-ink">{formatExact(day.total)}</span>
       </p>
-      <p className="text-gray-600">{formatExact(day.engagement)} engagement</p>
+      <p className="text-ink-muted">
+        That day: {day.posts} {day.posts === 1 ? "post" : "posts"}, {formatExact(day.views)} views
+      </p>
     </div>
   );
 }

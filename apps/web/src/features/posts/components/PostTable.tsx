@@ -1,92 +1,144 @@
+import { Link } from "react-router-dom";
 import type { Post } from "@/api/queries/posts";
-import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
-import { formatCount, formatDateTime, formatExact } from "@/lib/format";
+import Avatar from "@/components/ui/Avatar";
+import Icon from "@/components/ui/Icon";
+import Menu from "@/components/ui/Menu";
+import { formatCount, formatExact } from "@/lib/format";
 
 interface PostTableProps {
   posts: Post[];
   editable: boolean;
-  /** What to show as each post's link text; defaults to the creator's @handle. */
-  label?: (post: Post) => string;
+  /** On a creator's page every post is theirs, so show the campaign instead. */
+  campaignName?: (post: Post) => string;
   onMove: (post: Post) => void;
   onRemove: (post: Post) => void;
 }
 
 const METRICS = [
-  { key: "views", label: "Views" },
-  { key: "likes", label: "Likes" },
-  { key: "comments", label: "Comments" },
-  { key: "shares", label: "Shares" },
+  { key: "views", label: "VIEWS" },
+  { key: "likes", label: "LIKES" },
+  { key: "comments", label: "COMMENTS" },
+  { key: "shares", label: "SHARES" },
 ] as const;
 
-// Posts with views, likes, comments and shares (US-17). Scrolls sideways on small screens.
-export default function PostTable({ posts, editable, label, onMove, onRemove }: PostTableProps) {
+const dateFormat = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" });
+const timeFormat = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+
+function engagementRate(post: Post): string | null {
+  if (!post.views) return null;
+  return `${(((post.likes + post.comments + post.shares) / post.views) * 100).toFixed(1)}%`;
+}
+
+// Posts with views, likes, comments, shares and engagement rate (US-17), in the
+// design's post tracking table. Scrolls sideways on small screens.
+export default function PostTable({ posts, editable, campaignName, onMove, onRemove }: PostTableProps) {
+  const heading = "px-3 text-[9px] font-semibold tracking-wide text-ink-muted";
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-      <table className="w-full min-w-[40rem] text-left text-sm">
-        <thead className="border-b border-gray-200 bg-gray-50 text-xs font-medium text-gray-500">
+    <div className="overflow-x-auto rounded-card border border-line bg-surface">
+      <table className="w-full min-w-[52rem] text-left">
+        <thead className="h-11 bg-sunken">
           <tr>
-            <th scope="col" className="px-4 py-2.5">
-              Post
+            <th scope="col" className={`${heading} pl-5`}>
+              POST
+            </th>
+            <th scope="col" className={heading}>
+              {campaignName ? "CAMPAIGN" : "CREATOR"}
             </th>
             {METRICS.map((m) => (
-              <th key={m.key} scope="col" className="px-3 py-2.5 text-right">
+              <th key={m.key} scope="col" className={`${heading} text-right`}>
                 {m.label}
               </th>
             ))}
-            {editable && (
-              <th scope="col" className="px-4 py-2.5">
-                <span className="sr-only">Actions</span>
-              </th>
-            )}
+            <th scope="col" className={`${heading} text-right`}>
+              ENG. RATE
+            </th>
+            <th scope="col" className={heading}>
+              POSTED
+            </th>
+            <th scope="col" className="pr-5">
+              <span className="sr-only">Actions</span>
+            </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
-          {posts.map((post) => (
-            <tr key={post.id} className="align-top">
-              <td className="max-w-xs px-4 py-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <a
-                    href={post.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium text-gray-900 hover:text-brand"
-                  >
-                    {label ? label(post) : `@${post.creator.handle}`}
-                  </a>
-                  {post.match_source === "manual" && <Badge>Manual</Badge>}
-                </div>
-                <p className="mt-0.5 text-xs text-gray-500">
-                  {formatDateTime(post.posted_at)}
-                  {post.last_synced_at === null && " · not synced"}
-                </p>
-                {post.caption && (
-                  <p className="mt-1 line-clamp-2 text-xs text-gray-600" title={post.caption}>
-                    {post.caption}
+        <tbody className="divide-y divide-line">
+          {posts.map((post) => {
+            const rate = engagementRate(post);
+            const posted = new Date(post.posted_at);
+            return (
+              <tr key={post.id} className="align-middle">
+                <td className="max-w-64 py-[13px] pl-5 pr-3">
+                  <p className="line-clamp-2 text-[11px] text-ink" title={post.caption || undefined}>
+                    {post.caption || "TikTok post"}
                   </p>
-                )}
-              </td>
-              {METRICS.map((m) => (
-                <td
-                  key={m.key}
-                  className="px-3 py-3 text-right tabular-nums text-gray-900"
-                  title={formatExact(post[m.key])}
-                >
-                  {formatCount(post[m.key])}
+                  <p className="mt-1 flex items-center gap-[5px] text-[10px] text-ink-muted">
+                    <Icon name="music" className="size-[11px]" />
+                    TikTok · {post.match_source === "manual" ? "added manually" : "matched by hashtag"}
+                    {post.last_synced_at === null && " · not synced"}
+                  </p>
                 </td>
-              ))}
-              {editable && (
-                <td className="whitespace-nowrap px-4 py-3 text-right">
-                  <Button variant="link" onClick={() => onMove(post)}>
-                    Move
-                  </Button>
-                  <Button variant="link" className="ml-3 !text-red-600" onClick={() => onRemove(post)}>
-                    Remove
-                  </Button>
+                <td className="px-3 py-[13px]">
+                  {campaignName ? (
+                    <Link to={`/campaigns/${post.campaign_id}`} className="text-[11px] text-ink-muted hover:text-ink">
+                      {campaignName(post)}
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Avatar name={post.creator.name} size="sm" />
+                      <div className="min-w-0">
+                        <Link
+                          to={`/creators/${post.creator.id}`}
+                          className="block truncate text-[11px] font-medium text-ink hover:text-brand"
+                        >
+                          {post.creator.name}
+                        </Link>
+                        <p className="truncate text-[9px] text-ink-muted">@{post.creator.handle}</p>
+                      </div>
+                    </div>
+                  )}
                 </td>
-              )}
-            </tr>
-          ))}
+                {METRICS.map((m) => (
+                  <td
+                    key={m.key}
+                    className="px-3 py-[13px] text-right text-xs tabular-nums text-ink"
+                    title={formatExact(post[m.key])}
+                  >
+                    {formatCount(post[m.key])}
+                  </td>
+                ))}
+                <td className={`px-3 py-[13px] text-right text-xs tabular-nums ${rate ? "text-on-target" : "text-ink-subtle"}`}>
+                  {rate ?? "—"}
+                </td>
+                <td className="whitespace-nowrap px-3 py-[13px]">
+                  <p className="text-[10px] text-ink">{dateFormat.format(posted)}</p>
+                  <p className="mt-1 text-[9px] text-ink-muted">{timeFormat.format(posted)}</p>
+                </td>
+                <td className="py-[13px] pr-5">
+                  <div className="flex items-center justify-end gap-2">
+                    <a
+                      href={post.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="Open on TikTok"
+                      className="flex size-[26px] items-center justify-center rounded-full text-ink-muted hover:bg-canvas hover:text-ink"
+                    >
+                      <Icon name="external-link" className="size-[15px]" />
+                    </a>
+                    {editable && (
+                      <Menu
+                        label="Post actions"
+                        triggerClassName="flex size-[26px] items-center justify-center rounded-full text-ink-muted hover:bg-canvas hover:text-ink"
+                        trigger={<Icon name="ellipsis" className="size-[15px]" />}
+                        items={[
+                          { label: "Move to another campaign", onSelect: () => onMove(post) },
+                          { label: "Remove post", onSelect: () => onRemove(post), danger: true },
+                        ]}
+                      />
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

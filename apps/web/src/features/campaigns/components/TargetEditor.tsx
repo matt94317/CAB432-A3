@@ -43,8 +43,8 @@ function TargetForm({ campaignId, assignment, onClose }: { campaignId: string; a
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-      <p className="text-sm text-gray-600">
-        New target for <span className="font-medium text-gray-900">{assignment.creator.name}</span> on this campaign
+      <p className="text-sm text-ink-muted">
+        New target for <span className="font-medium text-ink">{assignment.creator.name}</span> on this campaign
         only.
       </p>
       {shownError && <Alert>{shownError}</Alert>}

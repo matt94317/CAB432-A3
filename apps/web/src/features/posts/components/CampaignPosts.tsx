@@ -24,34 +24,34 @@ export default function CampaignPosts({ campaign }: { campaign: Campaign }) {
   const hasCreators = (assignments.data?.length ?? 0) > 0;
 
   return (
-    <section className="mt-8">
+    <section>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-baseline gap-x-3">
-          <h2 className="text-lg font-semibold text-gray-900">Posts</h2>
+        <h2 className="text-base text-ink">Posts</h2>
+        <div className="flex flex-wrap items-center gap-2.5">
           {assignments.data && <LastSyncedBadge assignments={assignments.data} />}
+          {editable && hasCreators && (
+            <>
+              <Button variant="secondary" size="sm" onClick={() => sync.mutate()} loading={sync.isPending}>
+                Sync now
+              </Button>
+              <Button size="sm" icon="plus" onClick={() => setAdding(true)}>
+                Add post
+              </Button>
+            </>
+          )}
         </div>
-        {editable && hasCreators && (
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => sync.mutate()} loading={sync.isPending}>
-              Sync now
-            </Button>
-            <Button variant="secondary" onClick={() => setAdding(true)}>
-              Add post
-            </Button>
-          </div>
-        )}
       </div>
 
-      <div className="mt-3 flex flex-col gap-3">
+      <div className="mt-4 flex flex-col gap-3">
         {sync.error && <Alert>{sync.error.message}</Alert>}
         {sync.data && <SyncSummary run={sync.data} campaign={campaign} />}
-        {posts.isPending && <p className="text-sm text-gray-500">Loading posts…</p>}
+        {posts.isPending && <p className="text-[13px] text-ink-muted">Loading posts…</p>}
         {posts.isError && <Alert>{posts.error.message}</Alert>}
 
         {posts.data?.length === 0 && (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center">
-            <p className="font-medium text-gray-900">No posts yet</p>
-            <p className="mt-1 text-sm text-gray-500">
+          <div className="rounded-card border border-dashed border-line-strong bg-surface px-6 py-10 text-center">
+            <p className="font-medium text-ink">No posts yet</p>
+            <p className="mt-1 text-[13px] text-ink-muted">
               {hasCreators
                 ? "Posts using the campaign's hashtags are pulled in automatically. Sync now to check straight away."
                 : "Assign creators, and their posts with the campaign's hashtags will show here."}
@@ -80,7 +80,7 @@ export default function CampaignPosts({ campaign }: { campaign: Campaign }) {
         onConfirm={() => removing && remove.mutate(removing.id, { onSuccess: () => setRemoving(undefined) })}
       >
         <p>
-          This post by <span className="font-medium text-gray-900">@{removing?.creator.handle}</span> will stop counting
+          This post by <span className="font-medium text-ink">@{removing?.creator.handle}</span> will stop counting
           toward {campaign.name}. Sync won't add it back; you can add it again by link.
         </p>
       </ConfirmDialog>
