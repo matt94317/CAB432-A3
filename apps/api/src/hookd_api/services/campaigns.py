@@ -15,7 +15,7 @@ from hookd_api.schemas.campaign import (
     campaign_phase,
 )
 from hookd_core.enums import CampaignStatus
-from hookd_core.periods import current_period
+from hookd_core.progress import creator_progress
 from hookd_core.repositories.assignments import Assignment, AssignmentRepository
 from hookd_core.repositories.campaigns import Campaign, CampaignRepository
 from hookd_core.repositories.posts import Post, PostRepository
@@ -58,19 +58,12 @@ def progress(
     """
     if not assignments:
         return None
-    counted = 0
-    for a in assignments:
-        start, end = current_period(a.target_period, today, campaign.start_date, campaign.end_date)
-        posted = sum(
-            1
-            for p in posts
-            if p.creator_id == a.creator_id and start <= p.posted_at.astimezone(tz).date() <= end
-        )
-        counted += min(posted, a.target_posts)
+    rows = [creator_progress(a, campaign, posts, today, tz) for a in assignments]
     return CampaignProgress(
-        creators=len(assignments),
-        posts=counted,
-        target_posts=sum(a.target_posts for a in assignments),
+        creators=len(rows),
+        posts=sum(min(r.posts, r.target_posts) for r in rows),
+        target_posts=sum(r.target_posts for r in rows),
+        behind=sum(r.is_behind for r in rows),
     )
 
 

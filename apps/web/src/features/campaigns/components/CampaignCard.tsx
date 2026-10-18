@@ -50,7 +50,10 @@ export default function CampaignCard({ campaign, busy, onEdit, onArchiveToggle, 
         {progress && progress.target_posts > 0 ? (
           <>
             <div className="flex justify-between text-gray-600">
-              <span>{progress.creators} creators</span>
+              <span>
+                {progress.creators} creators
+                {progress.behind > 0 && <span className="text-behind"> · {progress.behind} behind</span>}
+              </span>
               <span>
                 {progress.posts} / {progress.target_posts} posts this period
               </span>

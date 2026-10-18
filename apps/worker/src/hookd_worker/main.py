@@ -7,6 +7,7 @@ from functools import partial
 
 import boto3
 
+from hookd_core.cache import make_cache
 from hookd_core.fetchers import make_fetcher
 from hookd_core.jobs import SqsJobPublisher
 from hookd_core.storage import make_storage
@@ -43,6 +44,7 @@ def main() -> None:
         publisher=SqsJobPublisher(sqs, settings.sync_queue_url),
         tz=settings.campaign_tz,
         lookback_days=settings.sync_lookback_days,
+        cache=make_cache(settings.redis_url),
     )
 
     # ECS stops tasks with SIGTERM: finish the current poll, then exit

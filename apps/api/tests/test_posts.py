@@ -153,7 +153,7 @@ def test_progress_counts_posts_this_period_up_to_each_target(
         add(client, alex, summer, url=f"https://www.tiktok.com/@amy/video/20000{i}")
 
     progress = client.get("/api/campaigns", headers=alex).json()[0]["progress"]
-    assert progress == {"creators": 2, "posts": 5, "target_posts": 5}
+    assert progress == {"creators": 2, "posts": 5, "target_posts": 5, "behind": 0}
 
 
 def test_cascades(client, alex, summer, autumn, lou):

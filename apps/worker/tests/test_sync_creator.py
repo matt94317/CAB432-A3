@@ -133,3 +133,17 @@ def test_consumer_deletes_only_handled_messages():
 
     assert SqsConsumer(sqs, "q").poll_once(handle) == 2
     assert sqs.deleted == ["r0", "r2"]  # r1 stays for retry, then the DLQ
+
+
+def test_sync_invalidates_the_organisations_dashboards(stores):
+    from dataclasses import replace
+
+    from hookd_core.cache import InMemoryCache
+
+    lou, _ = on_campaign(stores, "lou")
+    cache = InMemoryCache()
+    cache.set(lou.organisation_id, "campaign:x", "stale")
+    ctx = replace(context(stores), cache=cache)
+
+    dispatch(ctx, SyncCreatorJob(lou.organisation_id, lou.id).to_message())
+    assert cache.get(lou.organisation_id, "campaign:x") is None

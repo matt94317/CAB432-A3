@@ -9,9 +9,10 @@ from datetime import tzinfo
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from hookd_api.cache import get_cache
 from hookd_api.config import settings
 from hookd_api.queue import make_publisher
 from hookd_api.security import (
@@ -22,6 +23,7 @@ from hookd_api.security import (
 )
 from hookd_api.services import users as users_service
 from hookd_api.services.sync import InlineSync, QueuedSync, SyncRunner
+from hookd_core.cache import DashboardCache
 from hookd_core.fetchers import make_fetcher
 from hookd_core.repositories.assignments import AssignmentRepository
 from hookd_core.repositories.campaigns import CampaignRepository
@@ -76,6 +78,7 @@ def _unauthorized(detail: str) -> HTTPException:
 
 
 def get_current_user(
+    request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     users: Annotated[UserRepository, Depends(get_user_repository)],
     verifier: Annotated[CognitoTokenVerifier, Depends(get_token_verifier)],
@@ -93,6 +96,8 @@ def get_current_user(
         # First request after sign-up: create the user and their organisation
         profile = fetch_profile(credentials.credentials)
         user = users_service.provision(users, cognito_sub=claims.sub, profile=profile)
+    # Lets the cache middleware invalidate this organisation's dashboards after a write
+    request.state.organisation_id = user.organisation_id
     return user
 
 
@@ -139,3 +144,4 @@ PostRepo = Annotated[PostRepository, Depends(get_post_repository)]
 AllStores = Annotated[Stores, Depends(get_stores)]
 CampaignTz = Annotated[tzinfo, Depends(get_campaign_tz)]
 Syncer = Annotated[SyncRunner, Depends(get_sync_runner)]
+Cache = Annotated[DashboardCache, Depends(get_cache)]

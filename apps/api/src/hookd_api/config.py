@@ -10,7 +10,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    redis_url: str = "redis://localhost:6379/0"
+    redis_url: str = "redis://localhost:6379/0"  # empty: no dashboard cache
+    dashboard_cache_ttl_seconds: int = 300
     aws_region: str = "ap-southeast-2"
     aws_endpoint_url: str | None = None  # local SQS only; never used for Cognito
     sync_queue_url: str = ""

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useCampaign } from "@/api/queries/campaigns";
+import { useCampaignDashboard } from "@/api/queries/dashboard";
 import Alert from "@/components/ui/Alert";
 import Button from "@/components/ui/Button";
 import CampaignCreators from "@/features/campaigns/components/CampaignCreators";
@@ -8,12 +9,17 @@ import CampaignFormDialog from "@/features/campaigns/components/CampaignFormDial
 import CampaignStatusBadge from "@/features/campaigns/components/CampaignStatusBadge";
 import CampaignPosts from "@/features/posts/components/CampaignPosts";
 import { formatDateRange } from "@/lib/format";
+import CampaignTotals from "../components/CampaignTotals";
 
-// Campaign dashboard (US-19, US-20, US-22). Shows the campaign, its creators with their
-// targets, and its posts; per-creator progress, totals and behind-target flags arrive with Epic 5.
+// Recharts is large; load it only when a dashboard has a chart to draw
+const MetricsChart = lazy(() => import("../components/MetricsChart"));
+
+// Campaign dashboard: totals and daily views (US-20), each creator's posts vs target
+// with behind-target flags (US-19, US-22), and the campaign's posts.
 export default function CampaignDashboardPage() {
   const { campaignId = "" } = useParams();
   const campaign = useCampaign(campaignId);
+  const dashboard = useCampaignDashboard(campaignId);
   const [editing, setEditing] = useState(false);
 
   return (
@@ -54,6 +60,20 @@ export default function CampaignDashboardPage() {
               </Button>
             )}
           </div>
+
+          {dashboard.isError && (
+            <div className="mt-6">
+              <Alert>{dashboard.error.message}</Alert>
+            </div>
+          )}
+          {dashboard.data && dashboard.data.creators.length > 0 && (
+            <div className="mt-6 flex flex-col gap-4">
+              <CampaignTotals totals={dashboard.data.totals} />
+              <Suspense fallback={<div className="h-72 rounded-xl border border-gray-200 bg-white" />}>
+                <MetricsChart daily={dashboard.data.daily} />
+              </Suspense>
+            </div>
+          )}
 
           <CampaignCreators campaign={campaign.data} />
           <CampaignPosts campaign={campaign.data} />

@@ -6,6 +6,8 @@ import { formatCount, formatDateTime, formatExact } from "@/lib/format";
 interface PostTableProps {
   posts: Post[];
   editable: boolean;
+  /** What to show as each post's link text; defaults to the creator's @handle. */
+  label?: (post: Post) => string;
   onMove: (post: Post) => void;
   onRemove: (post: Post) => void;
 }
@@ -18,7 +20,7 @@ const METRICS = [
 ] as const;
 
 // Posts with views, likes, comments and shares (US-17). Scrolls sideways on small screens.
-export default function PostTable({ posts, editable, onMove, onRemove }: PostTableProps) {
+export default function PostTable({ posts, editable, label, onMove, onRemove }: PostTableProps) {
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
       <table className="w-full min-w-[40rem] text-left text-sm">
@@ -50,7 +52,7 @@ export default function PostTable({ posts, editable, onMove, onRemove }: PostTab
                     rel="noreferrer"
                     className="font-medium text-gray-900 hover:text-brand"
                   >
-                    @{post.creator.handle}
+                    {label ? label(post) : `@${post.creator.handle}`}
                   </a>
                   {post.match_source === "manual" && <Badge>Manual</Badge>}
                 </div>

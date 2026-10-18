@@ -65,7 +65,12 @@ def test_campaign_list_shows_progress(client, alex, campaign, lou, amy, assign):
     assign(alex, campaign, lou, target_posts=3)
     assign(alex, campaign, amy, target_posts=2)
     progress = client.get("/api/campaigns", headers=alex).json()[0]["progress"]
-    assert progress == {"creators": 2, "posts": 0, "target_posts": 5}
+    # How many are "behind" depends on the weekday; see test_dashboard
+    assert {k: progress[k] for k in ("creators", "posts", "target_posts")} == {
+        "creators": 2,
+        "posts": 0,
+        "target_posts": 5,
+    }
 
 
 def test_creator_shows_their_campaigns(client, alex, make_campaign, campaign, lou, assign):

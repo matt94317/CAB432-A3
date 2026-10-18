@@ -3,11 +3,13 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from hookd_api.cache import install_invalidation
 from hookd_api.errors import DomainError
 from hookd_api.routes import api_router
 
 app = FastAPI(title="Hookd Tracker API")
 app.include_router(api_router, prefix="/api")
+install_invalidation(app)
 
 
 @app.exception_handler(DomainError)

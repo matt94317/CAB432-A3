@@ -1,20 +1,25 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useCreator, useCreatorCampaigns } from "@/api/queries/creators";
+import { useCreator } from "@/api/queries/creators";
+import { useCreatorPerformance } from "@/api/queries/dashboard";
 import Alert from "@/components/ui/Alert";
 import Button from "@/components/ui/Button";
 import CampaignStatusBadge from "@/features/campaigns/components/CampaignStatusBadge";
-import { formatTarget } from "@/lib/targets";
+import CampaignTotals from "@/features/dashboard/components/CampaignTotals";
+import PeriodProgress from "@/features/dashboard/components/PeriodProgress";
+import ProgressStatusBadge from "@/features/dashboard/components/ProgressStatusBadge";
+import PostTable from "@/features/posts/components/PostTable";
 import CreatorFormDialog from "../components/CreatorFormDialog";
 import DeleteCreatorDialog from "../components/DeleteCreatorDialog";
 
-// One creator: profile, contact details and the campaigns they're on with their
-// target in each. Posts and performance across campaigns arrive with US-21.
+// One creator: profile and contact details, then their performance across every
+// campaign: totals, posts vs target in each campaign, and all their posts (US-21).
 export default function CreatorDetailPage() {
   const { creatorId = "" } = useParams();
   const navigate = useNavigate();
   const creator = useCreator(creatorId);
-  const campaigns = useCreatorCampaigns(creatorId);
+  const performance = useCreatorPerformance(creatorId);
+  const campaignNames = new Map(performance.data?.campaigns.map((c) => [c.campaign_id, c.name]));
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -72,38 +77,66 @@ export default function CreatorDetailPage() {
             </div>
           </div>
 
+          {performance.isError && (
+            <div className="mt-6">
+              <Alert>{performance.error.message}</Alert>
+            </div>
+          )}
+          {performance.data && performance.data.totals.posts > 0 && (
+            <div className="mt-6">
+              <CampaignTotals totals={performance.data.totals} />
+            </div>
+          )}
+
           <section className="mt-8">
             <h2 className="text-lg font-semibold text-gray-900">Campaigns</h2>
-            {campaigns.isError && (
-              <div className="mt-3">
-                <Alert>{campaigns.error.message}</Alert>
-              </div>
-            )}
-            {campaigns.data?.length === 0 && (
+            {performance.data?.campaigns.length === 0 && (
               <p className="mt-2 text-sm text-gray-500">
                 Not on any campaigns yet. Open a campaign and choose “Assign creators” to add them.
               </p>
             )}
-            {campaigns.data && campaigns.data.length > 0 && (
+            {performance.data && performance.data.campaigns.length > 0 && (
               <ul className="mt-3 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                {campaigns.data.map((row) => (
-                  <li key={row.campaign_id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
+                {performance.data.campaigns.map((row) => (
+                  <li key={row.campaign_id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
                     <div className="min-w-0 flex-1">
-                      <Link
-                        to={`/campaigns/${row.campaign_id}`}
-                        className="block truncate font-medium text-gray-900 hover:text-brand"
-                      >
-                        {row.name}
-                      </Link>
-                      <p className="truncate text-sm text-gray-500">{row.brand}</p>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          to={`/campaigns/${row.campaign_id}`}
+                          className="truncate font-medium text-gray-900 hover:text-brand"
+                        >
+                          {row.name}
+                        </Link>
+                        <CampaignStatusBadge campaign={{ status: row.campaign_status, phase: row.phase }} />
+                      </div>
+                      <p className="truncate text-sm text-gray-500">
+                        {row.brand} · {row.totals.posts} {row.totals.posts === 1 ? "post" : "posts"}
+                      </p>
                     </div>
-                    <span className="text-sm text-gray-600">{formatTarget(row.target_posts, row.target_period)}</span>
-                    <CampaignStatusBadge campaign={row} />
+                    <PeriodProgress progress={row} />
+                    <div className="sm:w-28 sm:text-right">
+                      <ProgressStatusBadge status={row.status} />
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
           </section>
+
+          {performance.data && performance.data.posts.length > 0 && (
+            <section className="mt-8">
+              <h2 className="text-lg font-semibold text-gray-900">Posts</h2>
+              <div className="mt-3">
+                <PostTable
+                  posts={performance.data.posts}
+                  editable={false}
+                  label={(post) => campaignNames.get(post.campaign_id) ?? "Post"}
+                  onMove={() => {}}
+                  onRemove={() => {}}
+                />
+              </div>
+            </section>
+          )}
 
           <CreatorFormDialog open={editing} creator={creator.data} onClose={() => setEditing(false)} />
           <DeleteCreatorDialog

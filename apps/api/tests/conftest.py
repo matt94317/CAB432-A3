@@ -18,6 +18,7 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
+from hookd_api.cache import get_cache
 from hookd_api.deps import (
     get_profile_fetcher,
     get_storage,
@@ -27,6 +28,7 @@ from hookd_api.deps import (
 from hookd_api.main import app
 from hookd_api.security import CognitoProfile, CognitoTokenVerifier
 from hookd_api.services.sync import InlineSync
+from hookd_core.cache import InMemoryCache
 from hookd_core.fetchers import FetchedPost, FetchError
 from hookd_core.storage import Storage, make_storage
 
@@ -121,16 +123,23 @@ def storage(monkeypatch: pytest.MonkeyPatch) -> Iterator[Storage]:
 
 
 @pytest.fixture
+def cache() -> InMemoryCache:
+    return InMemoryCache()
+
+
+@pytest.fixture
 def client(
     verifier: CognitoTokenVerifier,
     profiles: dict[str, CognitoProfile],
     tiktok: FakeTikTok,
     storage: Storage,
+    cache: InMemoryCache,
 ) -> Iterator[TestClient]:
     app.dependency_overrides[get_token_verifier] = lambda: verifier
     app.dependency_overrides[get_profile_fetcher] = lambda: profiles.__getitem__
 
     app.dependency_overrides[get_storage] = lambda: storage
+    app.dependency_overrides[get_cache] = lambda: cache
     runner = InlineSync(tiktok, ZoneInfo("Australia/Brisbane"), lookback_days=30)
     app.dependency_overrides[get_sync_runner] = lambda: runner
     yield TestClient(app)
