@@ -26,3 +26,38 @@ export function addDays(date: Date, days: number): Date {
   copy.setDate(copy.getDate() + days);
   return copy;
 }
+
+// Metric and time formatters for posts and sync status.
+
+const countFormat = new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 });
+const exactFormat = new Intl.NumberFormat();
+const dateTimeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+const relativeFormat = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+
+/** 1234 -> "1.2K" */
+export function formatCount(n: number): string {
+  return countFormat.format(n);
+}
+
+/** 1234 -> "1,234" */
+export function formatExact(n: number): string {
+  return exactFormat.format(n);
+}
+
+export function formatDateTime(iso: string): string {
+  return dateTimeFormat.format(new Date(iso));
+}
+
+/** A timestamp as "just now", "5 minutes ago", "yesterday"… */
+export function formatRelative(iso: string, now: Date = new Date()): string {
+  const seconds = (new Date(iso).getTime() - now.getTime()) / 1000;
+  const units: [Intl.RelativeTimeFormatUnit, number][] = [
+    ["day", 86400],
+    ["hour", 3600],
+    ["minute", 60],
+  ];
+  for (const [unit, size] of units) {
+    if (Math.abs(seconds) >= size) return relativeFormat.format(Math.round(seconds / size), unit);
+  }
+  return "just now";
+}
