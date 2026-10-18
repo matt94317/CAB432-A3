@@ -1,4 +1,5 @@
-"""Shared API test fixtures: in-memory database and locally signed Cognito-style tokens."""
+"""Shared API test fixtures: in-memory stores, a fake TikTok and locally signed
+Cognito-style tokens."""
 
 import time
 from collections.abc import Iterator
@@ -11,29 +12,26 @@ import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from hookd_api.deps import (
     get_assignment_repository,
     get_campaign_repository,
     get_creator_repository,
-    get_db,
     get_post_repository,
     get_profile_fetcher,
     get_sync_runner,
     get_token_verifier,
+    get_user_repository,
 )
 from hookd_api.main import app
 from hookd_api.security import CognitoProfile, CognitoTokenVerifier
 from hookd_api.services.sync import InlineSync
 from hookd_core.fetchers import FetchedPost, FetchError
-from hookd_core.models import Base
 from hookd_core.repositories.assignments import InMemoryAssignmentRepository
 from hookd_core.repositories.campaigns import InMemoryCampaignRepository
 from hookd_core.repositories.creators import InMemoryCreatorRepository
 from hookd_core.repositories.posts import InMemoryPostRepository
+from hookd_core.repositories.users import InMemoryUserRepository
 
 USER_POOL_ID = "ap-southeast-2_TestPool"
 APP_CLIENT_ID = "test-client-id"
@@ -71,16 +69,6 @@ def make_token() -> Any:
 @pytest.fixture
 def verifier() -> CognitoTokenVerifier:
     return CognitoTokenVerifier(USER_POOL_ID, APP_CLIENT_ID, key_source=StaticKeySource())
-
-
-@pytest.fixture
-def db_session_factory() -> Iterator[sessionmaker[Session]]:
-    engine = create_engine(
-        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
-    )
-    Base.metadata.create_all(engine)
-    yield sessionmaker(bind=engine, expire_on_commit=False)
-    engine.dispose()
 
 
 @pytest.fixture
@@ -122,16 +110,10 @@ def tiktok() -> FakeTikTok:
 
 @pytest.fixture
 def client(
-    db_session_factory: sessionmaker[Session],
     verifier: CognitoTokenVerifier,
     profiles: dict[str, CognitoProfile],
     tiktok: FakeTikTok,
 ) -> Iterator[TestClient]:
-    def override_get_db() -> Iterator[Session]:
-        with db_session_factory() as session:
-            yield session
-
-    app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_token_verifier] = lambda: verifier
     app.dependency_overrides[get_profile_fetcher] = lambda: profiles.__getitem__
 
@@ -143,6 +125,7 @@ def client(
     app.dependency_overrides[get_creator_repository] = provide(InMemoryCreatorRepository())
     app.dependency_overrides[get_assignment_repository] = provide(InMemoryAssignmentRepository())
     app.dependency_overrides[get_post_repository] = provide(InMemoryPostRepository())
+    app.dependency_overrides[get_user_repository] = provide(InMemoryUserRepository())
     runner = InlineSync(tiktok, ZoneInfo("Australia/Brisbane"), lookback_days=30)
     app.dependency_overrides[get_sync_runner] = provide(runner)
     yield TestClient(app)

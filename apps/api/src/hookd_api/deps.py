@@ -1,20 +1,18 @@
-"""FastAPI dependencies: database session and the signed-in user.
+"""FastAPI dependencies: storage, the signed-in user and sync.
 
 Every query must be scoped to the current user's organisation_id
 (use `user.organisation_id` from `CurrentUser`).
 """
 
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from datetime import tzinfo
 from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.orm import Session
 
 from hookd_api.config import settings
-from hookd_api.db import SessionLocal
 from hookd_api.queue import make_publisher
 from hookd_api.security import (
     AuthError,
@@ -25,7 +23,6 @@ from hookd_api.security import (
 from hookd_api.services import users as users_service
 from hookd_api.services.sync import InlineSync, QueuedSync, SyncRunner
 from hookd_core.fetchers import make_fetcher
-from hookd_core.models import User
 from hookd_core.repositories.assignments import (
     AssignmentRepository,
     InMemoryAssignmentRepository,
@@ -33,6 +30,7 @@ from hookd_core.repositories.assignments import (
 from hookd_core.repositories.campaigns import CampaignRepository, InMemoryCampaignRepository
 from hookd_core.repositories.creators import CreatorRepository, InMemoryCreatorRepository
 from hookd_core.repositories.posts import InMemoryPostRepository, PostRepository
+from hookd_core.repositories.users import InMemoryUserRepository, User, UserRepository
 from hookd_core.sync import Stores
 
 ProfileFetcher = Callable[[str], CognitoProfile]
@@ -40,9 +38,9 @@ ProfileFetcher = Callable[[str], CognitoProfile]
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def get_db() -> Iterator[Session]:
-    with SessionLocal() as session:
-        yield session
+@lru_cache
+def get_user_repository() -> UserRepository:
+    return InMemoryUserRepository()
 
 
 @lru_cache
@@ -68,7 +66,7 @@ def _unauthorized(detail: str) -> HTTPException:
 
 def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-    db: Annotated[Session, Depends(get_db)],
+    users: Annotated[UserRepository, Depends(get_user_repository)],
     verifier: Annotated[CognitoTokenVerifier, Depends(get_token_verifier)],
     fetch_profile: Annotated[ProfileFetcher, Depends(get_profile_fetcher)],
 ) -> User:
@@ -79,11 +77,11 @@ def get_current_user(
     except AuthError as exc:
         raise _unauthorized("Invalid or expired token") from exc
 
-    user = users_service.get_by_cognito_sub(db, claims.sub)
+    user = users_service.get_by_cognito_sub(users, claims.sub)
     if user is None:
         # First request after sign-up: create the user and their organisation
         profile = fetch_profile(credentials.credentials)
-        user = users_service.provision(db, cognito_sub=claims.sub, profile=profile)
+        user = users_service.provision(users, cognito_sub=claims.sub, profile=profile)
     return user
 
 
@@ -132,7 +130,6 @@ def get_sync_runner() -> SyncRunner:
     return InlineSync(fetcher, settings.campaign_tz, settings.sync_lookback_days)
 
 
-DbSession = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 CampaignRepo = Annotated[CampaignRepository, Depends(get_campaign_repository)]
 CreatorRepo = Annotated[CreatorRepository, Depends(get_creator_repository)]
