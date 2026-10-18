@@ -1,5 +1,5 @@
 """Fetch a creator's recent posts + metrics, match to campaigns by hashtag,
-upsert (idempotent), then invalidate cache (US-13, US-14, US-17).
+upsert (idempotent), then invalidate the dashboard cache (US-13, US-14, US-17).
 
 The work itself is hookd_core.sync.sync_creator, shared with the API's inline mode.
 """
@@ -35,4 +35,4 @@ def handle(job: SyncCreatorJob, context: WorkerContext) -> None:
         result.updated,
         result.removed,
     )
-    # TODO(Epic 5): invalidate the dashboard cache for the creator's campaigns
+    context.cache.invalidate(job.organisation_id)
