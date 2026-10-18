@@ -23,14 +23,12 @@ from hookd_api.security import (
 from hookd_api.services import users as users_service
 from hookd_api.services.sync import InlineSync, QueuedSync, SyncRunner
 from hookd_core.fetchers import make_fetcher
-from hookd_core.repositories.assignments import (
-    AssignmentRepository,
-    InMemoryAssignmentRepository,
-)
-from hookd_core.repositories.campaigns import CampaignRepository, InMemoryCampaignRepository
-from hookd_core.repositories.creators import CreatorRepository, InMemoryCreatorRepository
-from hookd_core.repositories.posts import InMemoryPostRepository, PostRepository
-from hookd_core.repositories.users import InMemoryUserRepository, User, UserRepository
+from hookd_core.repositories.assignments import AssignmentRepository
+from hookd_core.repositories.campaigns import CampaignRepository
+from hookd_core.repositories.creators import CreatorRepository
+from hookd_core.repositories.posts import PostRepository
+from hookd_core.repositories.users import User, UserRepository
+from hookd_core.storage import Storage, make_storage
 from hookd_core.sync import Stores
 
 ProfileFetcher = Callable[[str], CognitoProfile]
@@ -39,8 +37,21 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 @lru_cache
-def get_user_repository() -> UserRepository:
-    return InMemoryUserRepository()
+def get_storage() -> Storage:
+    return make_storage(
+        settings.storage,
+        table_name=settings.dynamodb_table,
+        region=settings.aws_region,
+        endpoint_url=settings.dynamodb_endpoint_url,
+        create_table=settings.dynamodb_create_table,
+    )
+
+
+StorageDep = Annotated[Storage, Depends(get_storage)]
+
+
+def get_user_repository(storage: StorageDep) -> UserRepository:
+    return storage.users
 
 
 @lru_cache
@@ -85,35 +96,25 @@ def get_current_user(
     return user
 
 
-# TODO: return the real stores once the A3 database is chosen (RDS or DynamoDB)
-@lru_cache
-def get_campaign_repository() -> CampaignRepository:
-    return InMemoryCampaignRepository()
+def get_campaign_repository(storage: StorageDep) -> CampaignRepository:
+    return storage.stores.campaigns
 
 
-@lru_cache
-def get_creator_repository() -> CreatorRepository:
-    return InMemoryCreatorRepository()
+def get_creator_repository(storage: StorageDep) -> CreatorRepository:
+    return storage.stores.creators
 
 
-@lru_cache
-def get_assignment_repository() -> AssignmentRepository:
-    return InMemoryAssignmentRepository()
+def get_assignment_repository(storage: StorageDep) -> AssignmentRepository:
+    return storage.stores.assignments
 
 
-@lru_cache
-def get_post_repository() -> PostRepository:
-    return InMemoryPostRepository()
+def get_post_repository(storage: StorageDep) -> PostRepository:
+    return storage.stores.posts
 
 
-def get_stores(
-    campaigns: Annotated[CampaignRepository, Depends(get_campaign_repository)],
-    creators: Annotated[CreatorRepository, Depends(get_creator_repository)],
-    assignments: Annotated[AssignmentRepository, Depends(get_assignment_repository)],
-    posts: Annotated[PostRepository, Depends(get_post_repository)],
-) -> Stores:
+def get_stores(storage: StorageDep) -> Stores:
     """All four stores, for services that work across them (posts, sync, cascading deletes)."""
-    return Stores(campaigns=campaigns, creators=creators, assignments=assignments, posts=posts)
+    return storage.stores
 
 
 def get_campaign_tz() -> tzinfo:

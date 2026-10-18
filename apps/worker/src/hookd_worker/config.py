@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     aws_region: str = "ap-southeast-2"
     aws_endpoint_url: str | None = None
     sync_queue_url: str = ""
+    storage: Literal["dynamodb", "memory"] = "dynamodb"
+    dynamodb_table: str = "hookd"
+    dynamodb_endpoint_url: str | None = None  # DynamoDB Local; unset in AWS
+    dynamodb_create_table: bool = False  # local only; Terraform creates it in AWS
     sync_lookback_days: int = 30
     tiktok_mode: Literal["mock", "live"] = "mock"
     tiktok_client_key: str = ""

@@ -9,28 +9,13 @@ import boto3
 
 from hookd_core.fetchers import make_fetcher
 from hookd_core.jobs import SqsJobPublisher
-from hookd_core.repositories.assignments import InMemoryAssignmentRepository
-from hookd_core.repositories.campaigns import InMemoryCampaignRepository
-from hookd_core.repositories.creators import InMemoryCreatorRepository
-from hookd_core.repositories.posts import InMemoryPostRepository
-from hookd_core.sync import Stores
+from hookd_core.storage import make_storage
 from hookd_worker.config import settings
 from hookd_worker.consumer import SqsConsumer
 from hookd_worker.context import WorkerContext
 from hookd_worker.handlers import dispatch
 
 log = logging.getLogger("hookd_worker")
-
-
-def make_stores() -> Stores:
-    # TODO: use the API's real stores once the A3 database is chosen (RDS or DynamoDB).
-    # In-memory stores are empty here, so until then the API syncs inline (SYNC_MODE).
-    return Stores(
-        campaigns=InMemoryCampaignRepository(),
-        creators=InMemoryCreatorRepository(),
-        assignments=InMemoryAssignmentRepository(),
-        posts=InMemoryPostRepository(),
-    )
 
 
 def main() -> None:
@@ -41,8 +26,17 @@ def main() -> None:
     sqs = boto3.client(
         "sqs", region_name=settings.aws_region, endpoint_url=settings.aws_endpoint_url
     )
+    if settings.storage == "memory":
+        log.warning("STORAGE=memory: the worker can't see the API's data, so syncs do nothing")
+    storage = make_storage(
+        settings.storage,
+        table_name=settings.dynamodb_table,
+        region=settings.aws_region,
+        endpoint_url=settings.dynamodb_endpoint_url,
+        create_table=settings.dynamodb_create_table,
+    )
     context = WorkerContext(
-        stores=make_stores(),
+        stores=storage.stores,
         fetcher=make_fetcher(
             settings.tiktok_mode, settings.tiktok_client_key, settings.tiktok_client_secret
         ),

@@ -13,25 +13,24 @@ apps/
   worker/    SQS sync workers          -> hookd_worker
   mcp/       MCP server (extension)    -> hookd_mcp
 packages/
-  core/      Shared Python: SQLAlchemy models, Alembic migrations, matching logic -> hookd_core
+  core/      Shared Python: repositories (DynamoDB), sync and matching logic -> hookd_core
   ui/        Shared design tokens
 infra/       Infrastructure as code + local dev config
 scripts/     Seed data, type generation
 Docs/        Project plan and A3 guidance
 ```
 
-`packages/core` is shared by the API and the worker so both write to the same
-models (the worker upserts posts, the API reads them).
+`packages/core` is shared by the API and the worker so both use the same stores
+(the worker upserts posts, the API reads them).
 
 ## Local development
 
 ```bash
 cp .env.example .env                        # then set COGNITO_* (see infra/README.md)
 cp apps/web/.env.example apps/web/.env      # then set VITE_COGNITO_*
-docker compose up -d postgres redis sqs     # backing services
+docker compose up -d dynamodb redis sqs     # backing services
 uv sync --all-packages                      # Python deps (uv workspace)
-uv run alembic -c packages/core/alembic.ini upgrade head
-uv run uvicorn hookd_api.main:app --reload  # http://localhost:8000/api/health
+uv run uvicorn hookd_api.main:app --reload  # http://localhost:8000/api/health (creates the table)
 
 npm install                                 # JS deps (npm workspace)
 npm run dev -w apps/web                     # http://localhost:5173
@@ -45,8 +44,22 @@ Or run everything in containers: `docker compose up --build`.
 |---|---|
 | Lint / format | `uv run ruff check .` / `uv run ruff format .` |
 | Python tests | `uv run pytest` |
-| New migration | `uv run alembic -c packages/core/alembic.ini revision --autogenerate -m "msg"` |
+| API tests on DynamoDB (moto) | `HOOKD_TEST_STORAGE=dynamodb uv run pytest apps/api` |
 | Regenerate API types | `npm run gen:api -w apps/web` (after changing API schemas or routes) |
+
+## Storage
+
+A3 stores everything in one **DynamoDB** table (RDS is blocked on the CAB432
+account); the plan is to move back to RDS PostgreSQL after the assignment.
+Services only use the protocols in `hookd_core.repositories`, so that move
+means adding SQL implementations and switching `STORAGE`. The SQLAlchemy models
+and Alembic setup in `packages/core` are kept for it. The table layout is
+documented in `hookd_core/repositories/dynamodb.py`.
+
+| Setting | |
+|---|---|
+| `STORAGE=dynamodb` (default) | `DYNAMODB_TABLE`; `DYNAMODB_ENDPOINT_URL` for DynamoDB Local; `DYNAMODB_CREATE_TABLE=true` creates it locally (Terraform creates it in AWS) |
+| `STORAGE=memory` | Per-process stores, lost on restart. The worker can't see the API's data, so use `SYNC_MODE=inline` |
 
 ## Post sync
 
@@ -56,8 +69,8 @@ The logic is `hookd_core.sync`, shared by the API and the worker.
 
 | Setting | |
 |---|---|
-| `SYNC_MODE=inline` (default) | "Sync now" runs inside the API request. Needed while the stores are in-memory, because the worker can't see the API's data |
-| `SYNC_MODE=queue` | The API queues one job per creator on `SYNC_QUEUE_URL`; the worker syncs them. EventBridge sends `{"type":"scheduled_sync"}` to sync everyone on an active campaign |
+| `SYNC_MODE=inline` (default) | "Sync now" runs inside the API request; no worker needed |
+| `SYNC_MODE=queue` | The API queues one job per creator on `SYNC_QUEUE_URL`; the worker syncs them. EventBridge sends `{"type":"scheduled_sync"}` to sync everyone on an active campaign. Used in AWS and in `docker compose` |
 | `TIKTOK_MODE=mock` (default) | Deterministic fake posts that use the campaign hashtags; metrics grow between syncs |
 | `TIKTOK_MODE=live` | TikTok Research API (`TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`) |
 | `CAMPAIGN_TIMEZONE` | Campaign dates and weekly/monthly targets are days in this timezone (default `Australia/Brisbane`) |
