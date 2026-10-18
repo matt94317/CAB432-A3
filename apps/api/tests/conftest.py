@@ -23,11 +23,11 @@ from hookd_api.deps import (
     get_token_verifier,
 )
 from hookd_api.main import app
-from hookd_api.repositories.assignments import InMemoryAssignmentRepository
-from hookd_api.repositories.campaigns import InMemoryCampaignRepository
-from hookd_api.repositories.creators import InMemoryCreatorRepository
 from hookd_api.security import CognitoProfile, CognitoTokenVerifier
 from hookd_core.models import Base
+from hookd_core.repositories.assignments import InMemoryAssignmentRepository
+from hookd_core.repositories.campaigns import InMemoryCampaignRepository
+from hookd_core.repositories.creators import InMemoryCreatorRepository
 
 USER_POOL_ID = "ap-southeast-2_TestPool"
 APP_CLIENT_ID = "test-client-id"

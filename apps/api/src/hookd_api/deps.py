@@ -14,12 +14,6 @@ from sqlalchemy.orm import Session
 
 from hookd_api.config import settings
 from hookd_api.db import SessionLocal
-from hookd_api.repositories.assignments import (
-    AssignmentRepository,
-    InMemoryAssignmentRepository,
-)
-from hookd_api.repositories.campaigns import CampaignRepository, InMemoryCampaignRepository
-from hookd_api.repositories.creators import CreatorRepository, InMemoryCreatorRepository
 from hookd_api.security import (
     AuthError,
     CognitoProfile,
@@ -28,6 +22,12 @@ from hookd_api.security import (
 )
 from hookd_api.services import users as users_service
 from hookd_core.models import User
+from hookd_core.repositories.assignments import (
+    AssignmentRepository,
+    InMemoryAssignmentRepository,
+)
+from hookd_core.repositories.campaigns import CampaignRepository, InMemoryCampaignRepository
+from hookd_core.repositories.creators import CreatorRepository, InMemoryCreatorRepository
 
 ProfileFetcher = Callable[[str], CognitoProfile]
 

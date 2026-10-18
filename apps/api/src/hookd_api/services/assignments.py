@@ -4,9 +4,6 @@ import uuid
 from dataclasses import replace
 
 from hookd_api.errors import Conflict, NotFound
-from hookd_api.repositories.assignments import Assignment, AssignmentRepository
-from hookd_api.repositories.campaigns import CampaignRepository
-from hookd_api.repositories.creators import Creator, CreatorRepository
 from hookd_api.schemas.assignment import (
     AssignedCreator,
     AssignmentCreate,
@@ -17,6 +14,9 @@ from hookd_api.services import campaigns as campaigns_service
 from hookd_api.services.campaigns import CampaignArchived
 from hookd_api.services.creators import CreatorNotFound
 from hookd_core.enums import CampaignStatus
+from hookd_core.repositories.assignments import Assignment, AssignmentRepository
+from hookd_core.repositories.campaigns import CampaignRepository
+from hookd_core.repositories.creators import Creator, CreatorRepository
 
 
 class AssignmentNotFound(NotFound):

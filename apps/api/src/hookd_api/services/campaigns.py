@@ -5,8 +5,6 @@ from collections import defaultdict
 from dataclasses import replace
 
 from hookd_api.errors import Conflict, InvalidRequest, NotFound
-from hookd_api.repositories.assignments import Assignment, AssignmentRepository
-from hookd_api.repositories.campaigns import Campaign, CampaignRepository
 from hookd_api.schemas.campaign import (
     CampaignCreate,
     CampaignListItem,
@@ -16,6 +14,8 @@ from hookd_api.schemas.campaign import (
     campaign_phase,
 )
 from hookd_core.enums import CampaignStatus
+from hookd_core.repositories.assignments import Assignment, AssignmentRepository
+from hookd_core.repositories.campaigns import Campaign, CampaignRepository
 
 
 class CampaignNotFound(NotFound):

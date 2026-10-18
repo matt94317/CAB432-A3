@@ -5,9 +5,6 @@ from collections import Counter
 from dataclasses import replace
 
 from hookd_api.errors import Conflict, NotFound
-from hookd_api.repositories.assignments import AssignmentRepository
-from hookd_api.repositories.campaigns import CampaignRepository
-from hookd_api.repositories.creators import Creator, CreatorRepository
 from hookd_api.schemas.campaign import campaign_phase
 from hookd_api.schemas.creator import (
     CreatorCampaign,
@@ -16,6 +13,9 @@ from hookd_api.schemas.creator import (
     CreatorUpdate,
     profile_url,
 )
+from hookd_core.repositories.assignments import AssignmentRepository
+from hookd_core.repositories.campaigns import CampaignRepository
+from hookd_core.repositories.creators import Creator, CreatorRepository
 
 
 class CreatorNotFound(NotFound):
