@@ -35,12 +35,12 @@ function MovePostForm({ post, onClose }: { post: Post; onClose: () => void }) {
     if (chosen) move.mutate({ postId: post.id, campaignId: chosen }, { onSuccess: onClose });
   }
 
-  if (campaigns.isPending) return <p className="text-sm text-gray-500">Loading campaigns…</p>;
+  if (campaigns.isPending) return <p className="text-sm text-ink-muted">Loading campaigns…</p>;
   if (campaigns.isError) return <Alert>{campaigns.error.message}</Alert>;
 
   if (destinations.length === 0) {
     return (
-      <div className="flex flex-col gap-4 text-sm text-gray-600">
+      <div className="flex flex-col gap-4 text-sm text-ink-muted">
         <p>
           {post.creator.name} isn't on any other active campaign. Assign them to the right campaign first, or remove
           this post instead.
@@ -56,8 +56,8 @@ function MovePostForm({ post, onClose }: { post: Post; onClose: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <p className="text-sm text-gray-600">
-        Count this post by <span className="font-medium text-gray-900">@{post.creator.handle}</span> toward another of
+      <p className="text-sm text-ink-muted">
+        Count this post by <span className="font-medium text-ink">@{post.creator.handle}</span> toward another of
         their campaigns. Sync won't move it back.
       </p>
       {move.error && <Alert>{move.error.message}</Alert>}

@@ -7,6 +7,7 @@ import Alert from "@/components/ui/Alert";
 import Button from "@/components/ui/Button";
 import TextField from "@/components/ui/TextField";
 import AuthLayout from "../components/AuthLayout";
+import PasswordField from "../components/PasswordField";
 
 interface LoginState {
   from?: string;
@@ -50,38 +51,40 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title="Log in"
-      subtitle="Track every creator and post in one place."
+      eyebrow="GOOD TO HAVE YOU BACK"
+      title="Your people. Your place."
+      subtitle="Log in to keep the good collaborations going."
       footer={
         <>
-          New to Hookd Tracker?{" "}
-          <Link to="/signup" className="font-medium text-brand hover:underline">
+          New around here?{" "}
+          <Link to="/signup" className="font-semibold text-brand hover:underline">
             Create an account
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
         {state.message && !error && <Alert tone="success">{state.message}</Alert>}
         {error && <Alert>{error}</Alert>}
         <TextField
-          label="Email"
+          label="Work email"
           type="email"
           autoComplete="email"
+          fieldSize="lg"
+          placeholder="you@company.com"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <TextField
+        <PasswordField
           label="Password"
-          type="password"
           autoComplete="current-password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Button type="submit" loading={submitting} disabled={!email || !password}>
-          Log in
+        <Button type="submit" icon="arrow-right" loading={submitting} disabled={!email || !password}>
+          Log in to Hookd
         </Button>
       </form>
     </AuthLayout>

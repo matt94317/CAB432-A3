@@ -1,16 +1,37 @@
-/* Hookd design tokens: shared by the app (apps/web). Copy into apps/www when they change. */
+/* Hookd design tokens: shared by the app (apps/web). Copy into apps/www when they change.
+   Source: the Hookd Figma file (app shell, login, campaign and creator pages). */
 
 :root {
-  /* Colour */
-  --hk-color-bg: #ffffff;
-  --hk-color-fg: #111111;
-  --hk-color-accent: #ff2d55;
-  --hk-color-on-target: #16a34a;
-  --hk-color-behind: #dc2626;
+  /* Brand */
+  --hk-color-accent: #7350d4;
+  --hk-color-accent-soft: #f0ebfb;
+  --hk-color-accent-muted: #d9c9f6;
+
+  /* Surfaces and lines */
+  --hk-color-canvas: #f7f7f4; /* page background */
+  --hk-color-surface: #ffffff; /* cards, sidebar, header */
+  --hk-color-surface-sunken: #f2f1f4; /* table headings */
+  --hk-color-line: #e8e6ec;
+  --hk-color-line-strong: #d6d2dd;
+  --hk-color-warm: #efe9e1; /* monogram tiles */
+
+  /* Text */
+  --hk-color-fg: #25232d;
+  --hk-color-fg-muted: #77747f;
+  --hk-color-fg-subtle: #a5a1ad;
+
+  /* Status (always shown with a word or icon, never colour alone) */
+  --hk-color-on-target: #28866c;
+  --hk-color-on-target-soft: #eaf5ef;
+  --hk-color-behind: #a97824;
+  --hk-color-behind-soft: #fff5df;
+  --hk-color-danger: #c2410c;
+  --hk-color-danger-soft: #fdeee7;
 
   /* Type */
-  --hk-font-sans: system-ui, sans-serif;
+  --hk-font-sans: "Inter", system-ui, sans-serif;
 
-  /* Spacing / radius */
-  --hk-radius: 8px;
+  /* Radius */
+  --hk-radius: 8px; /* controls */
+  --hk-radius-card: 12px;
 }

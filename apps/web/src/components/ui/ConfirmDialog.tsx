@@ -28,7 +28,7 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Modal open={open} title={title} onClose={onCancel}>
-      <div className="flex flex-col gap-4 text-sm text-gray-600">
+      <div className="flex flex-col gap-4 text-[13px] text-ink-muted">
         {error && <Alert>{error}</Alert>}
         <div>{children}</div>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

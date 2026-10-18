@@ -12,22 +12,23 @@ export default function PeriodProgress({ progress }: { progress: Progress }) {
   const { posts_this_period: posts, target_posts: target, expected_by_today: due } = progress;
   const share = (n: number) => `${Math.min(100, (n / target) * 100)}%`;
   const range = `${formatDate(progress.period_start)} – ${formatDate(progress.period_end)}`;
+  const behind = progress.status === "behind";
 
   return (
     <div className="w-full min-w-36 sm:w-44" title={range}>
-      <div className="flex justify-between text-xs text-gray-600">
+      <div className="flex justify-between gap-2 text-[11px] text-ink-muted">
         <span>
-          <span className="font-medium text-gray-900">{posts}</span> / {target} this {progress.target_period}
+          <span className="font-medium text-ink">{posts}</span> / {target} this {progress.target_period}
         </span>
-        {progress.status === "behind" && <span>{due} due by today</span>}
+        {behind && <span className="text-behind">{due} due by today</span>}
       </div>
-      <div className="relative mt-1 h-1.5 rounded-full bg-gray-100">
+      <div className="relative mt-2 h-[5px] rounded-full bg-brand-soft">
         <div
-          className={`h-full rounded-full ${progress.status === "behind" ? "bg-behind" : "bg-on-target"}`}
+          className={`h-full rounded-full ${behind ? "bg-behind" : "bg-brand"}`}
           style={{ width: share(posts) }}
         />
-        {progress.status === "behind" && due > 0 && (
-          <div className="absolute -top-0.5 h-2.5 w-px bg-gray-500" style={{ left: share(due) }} aria-hidden="true" />
+        {behind && due > 0 && (
+          <div className="absolute -top-[3px] h-[11px] w-px bg-ink-muted" style={{ left: share(due) }} aria-hidden="true" />
         )}
       </div>
     </div>

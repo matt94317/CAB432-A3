@@ -4,8 +4,12 @@ import { type Assignment, useAssignments, useUnassignCreator } from "@/api/queri
 import type { Campaign } from "@/api/queries/campaigns";
 import { useCampaignDashboard } from "@/api/queries/dashboard";
 import Alert from "@/components/ui/Alert";
+import Avatar from "@/components/ui/Avatar";
+import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Icon from "@/components/ui/Icon";
+import Menu from "@/components/ui/Menu";
 import PeriodProgress from "@/features/dashboard/components/PeriodProgress";
 import ProgressStatusBadge from "@/features/dashboard/components/ProgressStatusBadge";
 import { formatRelative } from "@/lib/format";
@@ -33,36 +37,36 @@ export default function CampaignCreators({ campaign }: { campaign: Campaign }) {
   const behind = dashboard.data?.behind_count ?? 0;
 
   return (
-    <section className="mt-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Creators
-          {behind > 0 && <span className="ml-2 text-sm font-normal text-behind">{behind} behind target</span>}
-        </h2>
+    <section className="overflow-hidden rounded-card border border-line bg-surface">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-base text-ink">Creators</h2>
+          {behind > 0 && <Badge tone="warning">{behind} behind target</Badge>}
+        </div>
         {editable && rows.length > 0 && (
-          <Button variant="secondary" onClick={() => setAssigning(true)}>
+          <Button variant="secondary" size="sm" icon="plus" onClick={() => setAssigning(true)}>
             Assign creators
           </Button>
         )}
       </div>
 
-      {assignments.isPending && <p className="mt-3 text-sm text-gray-500">Loading creators…</p>}
+      {assignments.isPending && <p className="px-5 pb-5 text-[13px] text-ink-muted">Loading creators…</p>}
       {assignments.isError && (
-        <div className="mt-3">
+        <div className="px-5 pb-5">
           <Alert>{assignments.error.message}</Alert>
         </div>
       )}
 
       {assignments.data?.length === 0 && (
-        <div className="mt-3 rounded-xl border border-dashed border-gray-300 bg-white px-6 py-12 text-center">
-          <p className="font-medium text-gray-900">No creators assigned yet</p>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className="border-t border-line px-6 py-12 text-center">
+          <p className="font-medium text-ink">No creators assigned yet</p>
+          <p className="mt-1 text-[13px] text-ink-muted">
             {editable
               ? "Assign creators from your roster and set how many posts each should publish per week or month."
               : "Restore this campaign to assign creators."}
           </p>
           {editable && (
-            <Button className="mt-4" onClick={() => setAssigning(true)}>
+            <Button className="mt-4" icon="plus" onClick={() => setAssigning(true)}>
               Assign creators
             </Button>
           )}
@@ -70,51 +74,64 @@ export default function CampaignCreators({ campaign }: { campaign: Campaign }) {
       )}
 
       {rows.length > 0 && (
-        <ul className="mt-3 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          {rows.map((assignment) => (
-            <li key={assignment.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <Link
-                  to={`/creators/${assignment.creator.id}`}
-                  className="block truncate font-medium text-gray-900 hover:text-brand"
-                >
-                  {assignment.creator.name}
-                </Link>
-                <p className="truncate text-sm text-gray-500">
-                  @{assignment.creator.handle}
-                  {assignment.creator.niche && ` · ${assignment.creator.niche}`}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {assignment.creator.last_synced_at
-                    ? `Synced ${formatRelative(assignment.creator.last_synced_at)}`
-                    : "Not synced yet"}
-                </p>
-              </div>
-              {progress.has(assignment.creator.id) ? (
-                <>
-                  <PeriodProgress progress={progress.get(assignment.creator.id)!} />
-                  <div className="sm:w-28 sm:text-right">
-                    <ProgressStatusBadge status={progress.get(assignment.creator.id)!.status} />
+        <>
+          <div className="hidden h-11 items-center gap-4 bg-sunken px-5 text-[9px] font-semibold tracking-wide text-ink-muted sm:flex">
+            <span className="flex-1">CREATOR</span>
+            <span className="w-44">THIS PERIOD</span>
+            <span className="w-28 text-right">STATUS</span>
+            {editable && <span className="w-[26px]" />}
+          </div>
+          <ul className="divide-y divide-line border-t border-line sm:border-t-0">
+            {rows.map((assignment) => {
+              const row = progress.get(assignment.creator.id);
+              return (
+                <li key={assignment.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-[13px]">
+                  <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                    <Avatar name={assignment.creator.name} size="sm" />
+                    <div className="min-w-0">
+                      <Link
+                        to={`/creators/${assignment.creator.id}`}
+                        className="block truncate text-xs font-medium text-ink hover:text-brand"
+                      >
+                        {assignment.creator.name}
+                      </Link>
+                      <p className="truncate text-[10px] text-ink-muted">
+                        @{assignment.creator.handle}
+                        {" · "}
+                        {assignment.creator.last_synced_at
+                          ? `synced ${formatRelative(assignment.creator.last_synced_at)}`
+                          : "not synced yet"}
+                      </p>
+                    </div>
                   </div>
-                </>
-              ) : (
-                <span className="text-sm text-gray-700">
-                  {formatTarget(assignment.target_posts, assignment.target_period)}
-                </span>
-              )}
-              {editable && (
-                <div className="flex gap-4">
-                  <Button variant="link" onClick={() => setEditing(assignment)}>
-                    Change target
-                  </Button>
-                  <Button variant="link" className="!text-red-600" onClick={() => setRemoving(assignment)}>
-                    Remove
-                  </Button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+                  {row ? (
+                    <>
+                      <PeriodProgress progress={row} />
+                      <div className="sm:w-28 sm:text-right">
+                        <ProgressStatusBadge status={row.status} />
+                      </div>
+                    </>
+                  ) : (
+                    <span className="text-[11px] text-ink-muted sm:w-[17rem]">
+                      {formatTarget(assignment.target_posts, assignment.target_period)}
+                    </span>
+                  )}
+                  {editable && (
+                    <Menu
+                      label={`Actions for ${assignment.creator.name}`}
+                      triggerClassName="flex size-[26px] items-center justify-center rounded-full text-ink-muted hover:bg-canvas hover:text-ink"
+                      trigger={<Icon name="ellipsis" className="size-4" />}
+                      items={[
+                        { label: "Change target", onSelect: () => setEditing(assignment) },
+                        { label: "Remove from campaign", onSelect: () => setRemoving(assignment), danger: true },
+                      ]}
+                    />
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
 
       <AssignCreatorsDialog
@@ -140,7 +157,7 @@ export default function CampaignCreators({ campaign }: { campaign: Campaign }) {
         }
       >
         <p>
-          <span className="font-medium text-gray-900">{removing?.creator.name}</span> will be taken off{" "}
+          <span className="font-medium text-ink">{removing?.creator.name}</span> will be taken off{" "}
           {campaign.name}, and their posts in it will no longer be tracked. They stay in your roster.
         </p>
       </ConfirmDialog>

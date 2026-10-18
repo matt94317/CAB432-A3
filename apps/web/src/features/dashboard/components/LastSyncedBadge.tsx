@@ -12,11 +12,11 @@ export default function LastSyncedBadge({ assignments }: { assignments: Assignme
   const synced = times.filter((t): t is string => t !== null).sort();
   const neverSynced = times.length - synced.length;
 
-  if (synced.length === 0) return <span className="text-sm text-gray-500">Not synced yet</span>;
+  if (synced.length === 0) return <span className="text-[11px] text-ink-muted">Not synced yet</span>;
 
   const oldest = synced[0];
   return (
-    <span className="text-sm text-gray-500" title={`Oldest sync: ${formatDateTime(oldest)}`}>
+    <span className="text-[11px] text-ink-muted" title={`Oldest sync: ${formatDateTime(oldest)}`}>
       Synced {formatRelative(oldest, now)}
       {neverSynced > 0 && ` · ${neverSynced} not synced yet`}
     </span>

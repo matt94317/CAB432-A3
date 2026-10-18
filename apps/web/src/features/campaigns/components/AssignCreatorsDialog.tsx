@@ -59,12 +59,12 @@ function AssignCreatorsForm({ campaignId, assignedIds, onClose }: Omit<AssignCre
     );
   }
 
-  if (creators.isPending) return <p className="text-sm text-gray-500">Loading your roster…</p>;
+  if (creators.isPending) return <p className="text-sm text-ink-muted">Loading your roster…</p>;
   if (creators.isError) return <Alert>{creators.error.message}</Alert>;
 
   if (available.length === 0) {
     return (
-      <div className="flex flex-col gap-4 text-sm text-gray-600">
+      <div className="flex flex-col gap-4 text-sm text-ink-muted">
         <p>
           {creators.data.length === 0
             ? "Your roster is empty. Add creators first, then assign them here."
@@ -92,7 +92,7 @@ function AssignCreatorsForm({ campaignId, assignedIds, onClose }: Omit<AssignCre
       {shownError && <Alert>{shownError}</Alert>}
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm font-medium text-gray-900">Creators</legend>
+        <legend className="text-sm font-medium text-ink">Creators</legend>
         {available.length > 6 && (
           <input
             type="search"
@@ -100,13 +100,13 @@ function AssignCreatorsForm({ campaignId, assignedIds, onClose }: Omit<AssignCre
             placeholder="Search by name, handle or niche"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="mt-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            className="mt-1.5 rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
           />
         )}
-        <ul className="mt-1.5 max-h-64 divide-y divide-gray-100 overflow-y-auto rounded-lg border border-gray-200">
+        <ul className="mt-1.5 max-h-64 divide-y divide-line overflow-y-auto rounded-lg border border-line">
           {shown.map((creator) => (
             <li key={creator.id}>
-              <label className="flex cursor-pointer items-center gap-3 px-3 py-2.5 hover:bg-gray-50">
+              <label className="flex cursor-pointer items-center gap-3 px-3 py-2.5 hover:bg-canvas">
                 <input
                   type="checkbox"
                   className="size-4 accent-brand"
@@ -114,8 +114,8 @@ function AssignCreatorsForm({ campaignId, assignedIds, onClose }: Omit<AssignCre
                   onChange={() => toggle(creator.id)}
                 />
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium text-gray-900">{creator.name}</span>
-                  <span className="block truncate text-xs text-gray-500">
+                  <span className="block truncate text-sm font-medium text-ink">{creator.name}</span>
+                  <span className="block truncate text-xs text-ink-muted">
                     @{creator.handle}
                     {creator.niche && ` · ${creator.niche}`}
                   </span>
@@ -123,13 +123,13 @@ function AssignCreatorsForm({ campaignId, assignedIds, onClose }: Omit<AssignCre
               </label>
             </li>
           ))}
-          {shown.length === 0 && <li className="px-3 py-2.5 text-sm text-gray-500">No creators match.</li>}
+          {shown.length === 0 && <li className="px-3 py-2.5 text-sm text-ink-muted">No creators match.</li>}
         </ul>
       </fieldset>
 
       <div>
         <TargetFields posts={posts} period={period} onPostsChange={setPosts} onPeriodChange={setPeriod} />
-        <p className="mt-1.5 text-xs text-gray-500">Everyone starts on this target. You can change each creator's later.</p>
+        <p className="mt-1.5 text-xs text-ink-muted">Everyone starts on this target. You can change each creator's later.</p>
       </div>
 
       <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

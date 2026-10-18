@@ -27,16 +27,16 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-card border border-line bg-surface p-6 shadow-xl"
       >
-        <h2 id={titleId} className="text-lg font-semibold text-gray-900">
+        <h2 id={titleId} className="text-base font-semibold text-ink">
           {title}
         </h2>
         <div className="mt-4">{children}</div>

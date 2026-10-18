@@ -67,7 +67,7 @@ export default function CampaignForm({ campaign, submitLabel, pending, error, on
         {tags.length > 0 && (
           <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Hashtags that will be tracked">
             {tags.map((tag) => (
-              <li key={tag} className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+              <li key={tag} className="rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
                 #{tag}
               </li>
             ))}

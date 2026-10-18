@@ -6,6 +6,7 @@ import Alert from "@/components/ui/Alert";
 import Button from "@/components/ui/Button";
 import TextField from "@/components/ui/TextField";
 import AuthLayout from "../components/AuthLayout";
+import PasswordField from "../components/PasswordField";
 
 // Sign up (US-01). Cognito emails a code, confirmed on /confirm.
 export default function SignUpPage() {
@@ -41,37 +42,40 @@ export default function SignUpPage() {
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Your campaigns and creators are private to you."
+      eyebrow="WELCOME TO HOOKD"
+      title="Every creator. One place."
+      subtitle="Create your account. Your campaigns and creators stay private to you."
       footer={
         <>
           Already have an account?{" "}
-          <Link to="/login" className="font-medium text-brand hover:underline">
+          <Link to="/login" className="font-semibold text-brand hover:underline">
             Log in
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
         {error && <Alert>{error}</Alert>}
         <TextField
           label="Name"
           autoComplete="name"
+          fieldSize="lg"
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <TextField
-          label="Email"
+          label="Work email"
           type="email"
           autoComplete="email"
+          fieldSize="lg"
+          placeholder="you@company.com"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <TextField
+        <PasswordField
           label="Password"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}
@@ -79,7 +83,7 @@ export default function SignUpPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Button type="submit" loading={submitting} disabled={!name || !email || !password}>
+        <Button type="submit" icon="arrow-right" loading={submitting} disabled={!name || !email || !password}>
           Create account
         </Button>
       </form>

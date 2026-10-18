@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import type { CampaignListItem } from "@/api/queries/campaigns";
-import Button from "@/components/ui/Button";
+import Icon from "@/components/ui/Icon";
+import Menu from "@/components/ui/Menu";
 import { formatDateRange } from "@/lib/format";
 import CampaignStatusBadge from "./CampaignStatusBadge";
 
-const MAX_TAGS = 4;
+const MAX_TAGS = 3;
 
 interface CampaignCardProps {
   campaign: CampaignListItem;
@@ -14,74 +15,89 @@ interface CampaignCardProps {
   onDelete: () => void;
 }
 
-// One campaign in the list: status, dates, hashtags and progress at a glance (US-06).
+// One campaign in the directory: status, brand, dates, creators and this period's
+// posts against target (US-06). The design's cover photo becomes a tinted band with
+// the hashtags, since campaigns have no imagery.
 export default function CampaignCard({ campaign, busy, onEdit, onArchiveToggle, onDelete }: CampaignCardProps) {
   const archived = campaign.status === "archived";
-  const extraTags = campaign.tracking_hashtags.length - MAX_TAGS;
   const progress = campaign.progress;
+  const percent = progress && progress.target_posts > 0 ? Math.round((progress.posts / progress.target_posts) * 100) : 0;
+  const extraTags = campaign.tracking_hashtags.length - MAX_TAGS;
 
   return (
-    <li className="flex flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Link
-            to={`/campaigns/${campaign.id}`}
-            className="block truncate font-semibold text-gray-900 hover:text-brand"
-          >
-            {campaign.name}
-          </Link>
-          <p className="truncate text-sm text-gray-500">{campaign.brand}</p>
+    <li className="flex flex-col overflow-hidden rounded-card border border-line bg-surface">
+      <div className="relative h-[92px] bg-warm px-[15px] pt-3.5">
+        <div className="flex items-start justify-between">
+          <CampaignStatusBadge campaign={campaign} />
+          <Menu
+            label={`Actions for ${campaign.name}`}
+            triggerClassName="flex size-[26px] items-center justify-center rounded-full bg-surface text-ink hover:bg-canvas disabled:opacity-60"
+            trigger={<Icon name="ellipsis" className="size-4" />}
+            items={[
+              ...(archived ? [] : [{ label: "Edit", onSelect: onEdit }]),
+              { label: archived ? "Restore" : "Archive", onSelect: onArchiveToggle },
+              { label: "Delete", onSelect: onDelete, danger: true },
+            ]}
+          />
         </div>
-        <CampaignStatusBadge campaign={campaign} />
+        <ul className="absolute bottom-3 left-[15px] right-[15px] flex flex-wrap gap-1.5" aria-label="Tracking hashtags">
+          {campaign.tracking_hashtags.slice(0, MAX_TAGS).map((tag) => (
+            <li key={tag} className="rounded-full bg-surface/80 px-2 py-0.5 text-[10px] text-brand">
+              #{tag}
+            </li>
+          ))}
+          {extraTags > 0 && <li className="px-1 text-[10px] text-brand">+{extraTags}</li>}
+        </ul>
       </div>
 
-      <p className="mt-3 text-sm text-gray-600">{formatDateRange(campaign.start_date, campaign.end_date)}</p>
+      <div className={`flex flex-1 flex-col gap-[15px] p-5 ${busy ? "opacity-60" : ""}`}>
+        <div className="flex flex-col gap-1.5">
+          <p className="truncate text-[9px] uppercase tracking-wide text-ink-muted">{campaign.brand} · UGC campaign</p>
+          <Link to={`/campaigns/${campaign.id}`} className="truncate text-[19px] font-semibold text-ink hover:text-brand">
+            {campaign.name}
+          </Link>
+          <p className="flex items-center gap-1.5 text-[11px] text-ink-muted">
+            <Icon name="calendar" className="size-3" />
+            {formatDateRange(campaign.start_date, campaign.end_date)}
+          </p>
+        </div>
 
-      <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Tracking hashtags">
-        {campaign.tracking_hashtags.slice(0, MAX_TAGS).map((tag) => (
-          <li key={tag} className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-            #{tag}
-          </li>
-        ))}
-        {extraTags > 0 && <li className="px-1 text-xs text-gray-500">+{extraTags} more</li>}
-      </ul>
-
-      <div className="mt-4 text-sm">
         {progress && progress.target_posts > 0 ? (
           <>
-            <div className="flex justify-between text-gray-600">
-              <span>
-                {progress.creators} creators
-                {progress.behind > 0 && <span className="text-behind"> · {progress.behind} behind</span>}
-              </span>
-              <span>
-                {progress.posts} / {progress.target_posts} posts this period
+            <div className="flex items-center justify-between text-[11px] text-ink-muted">
+              <span className="flex items-center gap-1.5">
+                <Icon name="users" className="size-3.5" />
+                {progress.creators} {progress.creators === 1 ? "creator" : "creators"}
               </span>
             </div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-100">
-              <div
-                className="h-full bg-brand"
-                style={{ width: `${Math.min(100, (progress.posts / progress.target_posts) * 100)}%` }}
-              />
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between">
+                <span className="text-[11px] font-medium text-ink">
+                  {progress.posts} / {progress.target_posts} posts this period
+                </span>
+                <span className="text-[10px] text-ink-muted">{percent}%</span>
+              </div>
+              <div className="h-[5px] overflow-hidden rounded-full bg-brand-soft">
+                <div className="h-full rounded-full bg-brand" style={{ width: `${Math.min(100, percent)}%` }} />
+              </div>
+            </div>
+            <div className="mt-auto border-t border-line pt-[15px]">
+              {progress.behind > 0 ? (
+                <p className="flex items-center gap-1.5 text-[10px] text-behind">
+                  <Icon name="alert" className="size-3" />
+                  {progress.behind} {progress.behind === 1 ? "creator" : "creators"} behind target
+                </p>
+              ) : (
+                <p className="flex items-center gap-1.5 text-[10px] text-on-target">
+                  <Icon name="check" className="size-3" />
+                  All creators on track
+                </p>
+              )}
             </div>
           </>
         ) : (
-          <p className="text-gray-400">No creators assigned yet</p>
+          <p className="mt-auto border-t border-line pt-[15px] text-[11px] text-ink-subtle">No creators assigned yet</p>
         )}
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-100 pt-3">
-        {!archived && (
-          <Button variant="link" onClick={onEdit} disabled={busy}>
-            Edit
-          </Button>
-        )}
-        <Button variant="link" onClick={onArchiveToggle} disabled={busy}>
-          {archived ? "Restore" : "Archive"}
-        </Button>
-        <Button variant="link" onClick={onDelete} disabled={busy} className="ml-auto !text-red-600">
-          Delete
-        </Button>
       </div>
     </li>
   );
