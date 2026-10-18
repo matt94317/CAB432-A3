@@ -22,6 +22,7 @@ class Creator:
     email: str | None = None
     phone: str | None = None
     platform: Platform = Platform.TIKTOK
+    last_synced_at: datetime | None = None  # last successful post sync (US-18)
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     created_at: datetime = field(default_factory=_now)
     updated_at: datetime = field(default_factory=_now)
