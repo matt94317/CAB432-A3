@@ -268,6 +268,68 @@ export interface paths {
         patch: operations["move_post_api_posts__post_id__patch"];
         trace?: never;
     };
+    "/api/campaigns/{campaign_id}/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Campaign Dashboard
+         * @description Every creator's posts vs target this period, campaign totals and daily performance.
+         *
+         *     Cached; any change to your data refreshes it. `X-Cache: hit|miss` says which.
+         */
+        get: operations["campaign_dashboard_api_campaigns__campaign_id__dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/behind-target": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Behind Target
+         * @description Creators behind target this period on any live campaign, most behind first.
+         */
+        get: operations["behind_target_api_behind_target_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/creators/{creator_id}/performance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Creator Performance
+         * @description One creator's posts and performance across all their campaigns.
+         */
+        get: operations["creator_performance_api_creators__creator_id__performance_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaign_id}/sync": {
         parameters: {
             query?: never;
@@ -362,6 +424,45 @@ export interface components {
             target_posts?: number | null;
             target_period?: components["schemas"]["TargetPeriod"] | null;
         };
+        /** BehindTargetItem */
+        BehindTargetItem: {
+            /** Target Posts */
+            target_posts: number;
+            target_period: components["schemas"]["TargetPeriod"];
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /** Posts This Period */
+            posts_this_period: number;
+            /**
+             * Expected By Today
+             * @description Posts due so far at an even pace (rounded down)
+             */
+            expected_by_today: number;
+            /** Remaining */
+            remaining: number;
+            /** @description met, on_track, behind (fewer posts than expected by today) or upcoming */
+            status: components["schemas"]["ProgressStatus"];
+            /**
+             * Campaign Id
+             * Format: uuid
+             */
+            campaign_id: string;
+            /** Campaign Name */
+            campaign_name: string;
+            /** Brand */
+            brand: string;
+            creator: components["schemas"]["AssignedCreator"];
+            /** Email */
+            email: string | null;
+        };
         /** CampaignCreate */
         CampaignCreate: {
             /** Name */
@@ -383,6 +484,39 @@ export interface components {
              * @description Posts with any of these hashtags count toward the campaign
              */
             tracking_hashtags: string[];
+        };
+        /** CampaignDashboard */
+        CampaignDashboard: {
+            campaign: components["schemas"]["CampaignRead"];
+            /**
+             * Today
+             * Format: date
+             * @description In the campaign timezone
+             */
+            today: string;
+            /**
+             * Creators
+             * @description Behind first, then by name
+             */
+            creators: components["schemas"]["CreatorProgressRow"][];
+            /** Behind Count */
+            behind_count: number;
+            totals: components["schemas"]["Metrics"];
+            /**
+             * Daily
+             * @description Campaign start to today (or its end)
+             */
+            daily: components["schemas"]["DailyMetrics"][];
+            /**
+             * Last Synced At
+             * @description Least recently synced creator. Null if any creator hasn't synced yet
+             */
+            last_synced_at: string | null;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
         };
         /** CampaignListItem */
         CampaignListItem: {
@@ -441,6 +575,12 @@ export interface components {
              * @description Sum of every assigned creator's per-period target
              */
             target_posts: number;
+            /**
+             * Behind
+             * @description Creators behind target this period
+             * @default 0
+             */
+            behind: number;
         };
         /** CampaignRead */
         CampaignRead: {
@@ -519,6 +659,45 @@ export interface components {
             target_posts: number;
             target_period: components["schemas"]["TargetPeriod"];
         };
+        /** CreatorCampaignPerformance */
+        CreatorCampaignPerformance: {
+            /** Target Posts */
+            target_posts: number;
+            target_period: components["schemas"]["TargetPeriod"];
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /** Posts This Period */
+            posts_this_period: number;
+            /**
+             * Expected By Today
+             * @description Posts due so far at an even pace (rounded down)
+             */
+            expected_by_today: number;
+            /** Remaining */
+            remaining: number;
+            /** @description met, on_track, behind (fewer posts than expected by today) or upcoming */
+            status: components["schemas"]["ProgressStatus"];
+            /**
+             * Campaign Id
+             * Format: uuid
+             */
+            campaign_id: string;
+            /** Name */
+            name: string;
+            /** Brand */
+            brand: string;
+            campaign_status: components["schemas"]["CampaignStatus"];
+            phase: components["schemas"]["CampaignPhase"];
+            totals: components["schemas"]["Metrics"];
+        };
         /** CreatorCreate */
         CreatorCreate: {
             /** Name */
@@ -534,6 +713,58 @@ export interface components {
             email?: string | null;
             /** Phone */
             phone?: string | null;
+        };
+        /** CreatorPerformance */
+        CreatorPerformance: {
+            /**
+             * Creator Id
+             * Format: uuid
+             */
+            creator_id: string;
+            /**
+             * Today
+             * Format: date
+             */
+            today: string;
+            /** @description Across every campaign */
+            totals: components["schemas"]["Metrics"];
+            /** Campaigns */
+            campaigns: components["schemas"]["CreatorCampaignPerformance"][];
+            /**
+             * Posts
+             * @description Every tracked post, newest first
+             */
+            posts: components["schemas"]["PostRead"][];
+        };
+        /** CreatorProgressRow */
+        CreatorProgressRow: {
+            /** Target Posts */
+            target_posts: number;
+            target_period: components["schemas"]["TargetPeriod"];
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /** Posts This Period */
+            posts_this_period: number;
+            /**
+             * Expected By Today
+             * @description Posts due so far at an even pace (rounded down)
+             */
+            expected_by_today: number;
+            /** Remaining */
+            remaining: number;
+            /** @description met, on_track, behind (fewer posts than expected by today) or upcoming */
+            status: components["schemas"]["ProgressStatus"];
+            creator: components["schemas"]["AssignedCreator"];
+            /** @description All of this creator's posts in the campaign */
+            totals: components["schemas"]["Metrics"];
         };
         /** CreatorRead */
         CreatorRead: {
@@ -587,6 +818,23 @@ export interface components {
             /** Phone */
             phone?: string | null;
         };
+        /** DailyMetrics */
+        DailyMetrics: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Posts */
+            posts: number;
+            /**
+             * Views
+             * @description Current views of the posts made that day
+             */
+            views: number;
+            /** Engagement */
+            engagement: number;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -598,6 +846,29 @@ export interface components {
          * @enum {string}
          */
         MatchSource: "hashtag" | "manual";
+        /** Metrics */
+        Metrics: {
+            /** Posts */
+            posts: number;
+            /** Views */
+            views: number;
+            /** Likes */
+            likes: number;
+            /** Comments */
+            comments: number;
+            /** Shares */
+            shares: number;
+            /**
+             * Engagement
+             * @description likes + comments + shares
+             */
+            engagement: number;
+            /**
+             * Engagement Rate
+             * @description engagement / views, 0 to 1. Null when there are no views
+             */
+            engagement_rate: number | null;
+        };
         /**
          * Platform
          * @enum {string}
@@ -715,6 +986,11 @@ export interface components {
              */
             updated_at: string;
         };
+        /**
+         * ProgressStatus
+         * @enum {string}
+         */
+        ProgressStatus: "met" | "on_track" | "behind" | "upcoming";
         /**
          * StatusFilter
          * @enum {string}
@@ -1703,6 +1979,102 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    campaign_dashboard_api_campaigns__campaign_id__dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignDashboard"];
+                };
+            };
+            /** @description Campaign not found in your organisation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    behind_target_api_behind_target_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BehindTargetItem"][];
+                };
+            };
+        };
+    };
+    creator_performance_api_creators__creator_id__performance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorPerformance"];
+                };
+            };
+            /** @description Creator not found in your organisation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };

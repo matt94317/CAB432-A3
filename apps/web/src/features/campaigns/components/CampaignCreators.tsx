@@ -2,29 +2,43 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { type Assignment, useAssignments, useUnassignCreator } from "@/api/queries/assignments";
 import type { Campaign } from "@/api/queries/campaigns";
+import { useCampaignDashboard } from "@/api/queries/dashboard";
 import Alert from "@/components/ui/Alert";
 import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import PeriodProgress from "@/features/dashboard/components/PeriodProgress";
+import ProgressStatusBadge from "@/features/dashboard/components/ProgressStatusBadge";
 import { formatRelative } from "@/lib/format";
 import { formatTarget } from "@/lib/targets";
 import AssignCreatorsDialog from "./AssignCreatorsDialog";
 import TargetEditor from "./TargetEditor";
 
-// Creators on a campaign with their targets: assign, change target, remove (US-09 to US-12).
+// Creators on a campaign: posts vs target this period, behind first (US-19, US-22), and
+// assign, change target, remove (US-09 to US-12).
 export default function CampaignCreators({ campaign }: { campaign: Campaign }) {
   const assignments = useAssignments(campaign.id);
+  const dashboard = useCampaignDashboard(campaign.id);
   const unassign = useUnassignCreator(campaign.id);
   const [assigning, setAssigning] = useState(false);
   const [editing, setEditing] = useState<Assignment | undefined>();
   const [removing, setRemoving] = useState<Assignment | undefined>();
 
   const editable = campaign.status === "active";
-  const rows = assignments.data ?? [];
+  const progress = new Map(dashboard.data?.creators.map((row) => [row.creator.id, row]));
+  // Dashboard order (behind first); assignments not in it yet (just added) go last
+  const order = new Map(dashboard.data?.creators.map((row, i) => [row.creator.id, i]));
+  const rows = [...(assignments.data ?? [])].sort(
+    (a, b) => (order.get(a.creator.id) ?? Infinity) - (order.get(b.creator.id) ?? Infinity),
+  );
+  const behind = dashboard.data?.behind_count ?? 0;
 
   return (
     <section className="mt-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-gray-900">Creators</h2>
+        <h2 className="text-lg font-semibold text-gray-900">
+          Creators
+          {behind > 0 && <span className="ml-2 text-sm font-normal text-behind">{behind} behind target</span>}
+        </h2>
         {editable && rows.length > 0 && (
           <Button variant="secondary" onClick={() => setAssigning(true)}>
             Assign creators
@@ -76,9 +90,18 @@ export default function CampaignCreators({ campaign }: { campaign: Campaign }) {
                     : "Not synced yet"}
                 </p>
               </div>
-              <span className="text-sm text-gray-700">
-                {formatTarget(assignment.target_posts, assignment.target_period)}
-              </span>
+              {progress.has(assignment.creator.id) ? (
+                <>
+                  <PeriodProgress progress={progress.get(assignment.creator.id)!} />
+                  <div className="sm:w-28 sm:text-right">
+                    <ProgressStatusBadge status={progress.get(assignment.creator.id)!.status} />
+                  </div>
+                </>
+              ) : (
+                <span className="text-sm text-gray-700">
+                  {formatTarget(assignment.target_posts, assignment.target_period)}
+                </span>
+              )}
               {editable && (
                 <div className="flex gap-4">
                   <Button variant="link" onClick={() => setEditing(assignment)}>

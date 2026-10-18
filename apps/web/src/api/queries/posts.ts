@@ -24,14 +24,15 @@ export function useCampaignPosts(campaignId: string) {
   });
 }
 
-// Posts change campaign progress; syncing also updates creators' last-synced times
+// Posts change campaign progress, dashboards and creator performance; syncing also
+// updates creators' last-synced times
 function usePostMutation<TVariables, TData>(mutationFn: (variables: TVariables) => Promise<TData>) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn,
     onSuccess: () =>
       Promise.all(
-        [postKeys.all, ["campaigns"], ["assignments"]].map((queryKey) =>
+        [postKeys.all, ["campaigns"], ["assignments"], ["creators"]].map((queryKey) =>
           queryClient.invalidateQueries({ queryKey }),
         ),
       ),

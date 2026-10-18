@@ -10,6 +10,7 @@ import {
 import Alert from "@/components/ui/Alert";
 import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import BehindTargetList from "@/features/dashboard/components/BehindTargetList";
 import CampaignCard from "../components/CampaignCard";
 import CampaignFormDialog from "../components/CampaignFormDialog";
 
@@ -49,6 +50,12 @@ export default function CampaignListPage() {
         </div>
         <Button onClick={openCreate}>New campaign</Button>
       </div>
+
+      {tab === "active" && (
+        <div className="mt-6">
+          <BehindTargetList />
+        </div>
+      )}
 
       <div className="mt-6 flex gap-1 border-b border-gray-200" role="tablist" aria-label="Campaign status">
         {TABS.map((t) => (
