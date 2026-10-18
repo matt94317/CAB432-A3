@@ -122,6 +122,11 @@ locals {
       { type = "CloudWatch dashboard", arn = module.observability.dashboard_arn, description = "Shows load, latency, errors, task counts, queue depth and cache hits." },
       { type = "CloudWatch alarm", arn = module.observability.alarm_arns.dlq, description = "Fires when a sync job lands in the dead-letter queue." },
       { type = "CloudWatch alarm", arn = module.observability.alarm_arns.alb_5xx, description = "Fires when the ALB returns too many 5xx errors." },
+      { type = "CloudWatch alarm", arn = module.worker.scaling_alarm_arns[0], description = "Scales sync workers out when jobs are waiting in the SQS queue." },
+      { type = "CloudWatch alarm", arn = module.worker.scaling_alarm_arns[1], description = "Scales sync workers back in to zero when the SQS queue is empty." },
+    ],
+    module.edge.dns_record_fqdn == null ? [] : [
+      { type = "Route 53 record", arn = module.edge.dns_record_fqdn, description = "Points ${var.domain_name} at the ALB." },
     ],
     var.enable_cloudfront ? [
       { type = "CloudFront distribution", arn = module.edge.cloudfront_arn, description = "Edge cache for the web app; passes /api and /mcp to the ALB." },

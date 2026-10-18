@@ -1,0 +1,141 @@
+# CAB432 A3 infrastructure for Gradescope (template: submission-a3-infra.yml).
+#
+# Values marked "<after apply: ...>" get a random ID from AWS when created. After
+# `terraform apply`, regenerate this whole file from the real resources:
+#   cd infra/terraform/envs/cab432
+#   terraform output -raw gradescope_infra_yaml > ../../../submission-a3-infra.yml
+# TODO: add the database table(s) once the A3 database is decided.
+
+cloudInfrastructure:
+  # --- Edge and routing ---
+  - type: CloudFront distribution
+    arn: "<after apply: CloudFront distribution ARN, from gradescope_infra_yaml>"
+    description: Edge cache for the web app; passes /api and /mcp to the ALB.
+
+  - type: Application Load Balancer
+    arn: "<after apply: ALB ARN, from gradescope_infra_yaml>"
+    description: HTTPS entry point routing /api, /mcp and the web app to their services.
+
+  - type: Route 53 record
+    arn: n12191434.cab432.com
+    description: Points n12191434.cab432.com at the ALB.
+
+  - type: ACM certificate
+    arn: arn:aws:acm:ap-southeast-2:901444280953:certificate/dd11cb64-3e67-466f-b78c-441aab10e389
+    description: TLS certificate for n12191434.cab432.com on the ALB.
+
+  # --- Compute (ECS Fargate) ---
+  - type: ECS cluster
+    arn: arn:aws:ecs:ap-southeast-2:901444280953:cluster/n12191434-a2-cluster
+    description: Fargate cluster that runs the api, worker, mcp and web services.
+
+  - type: ECS service
+    arn: arn:aws:ecs:ap-southeast-2:901444280953:service/n12191434-a2-cluster/n12191434-a3-hookd-api
+    description: Runs the FastAPI REST API as Fargate tasks in private subnets.
+
+  - type: ECS service
+    arn: arn:aws:ecs:ap-southeast-2:901444280953:service/n12191434-a2-cluster/n12191434-a3-hookd-worker
+    description: Runs the SQS sync worker as Fargate tasks in private subnets.
+
+  - type: ECS service
+    arn: arn:aws:ecs:ap-southeast-2:901444280953:service/n12191434-a2-cluster/n12191434-a3-hookd-mcp
+    description: Runs the MCP server for AI assistants as Fargate tasks in private subnets.
+
+  - type: ECS service
+    arn: arn:aws:ecs:ap-southeast-2:901444280953:service/n12191434-a2-cluster/n12191434-a3-hookd-web
+    description: Runs the nginx container serving the React app as Fargate tasks in private subnets.
+
+  - type: Application Auto Scaling target
+    arn: service/n12191434-a2-cluster/n12191434-a3-hookd-api
+    description: Scales the API from 1 to 4 tasks on CPU and requests per task.
+
+  - type: Application Auto Scaling target
+    arn: service/n12191434-a2-cluster/n12191434-a3-hookd-worker
+    description: Scales sync workers from 0 to 4 tasks on SQS queue depth.
+
+  - type: ECR repository
+    arn: arn:aws:ecr:ap-southeast-2:901444280953:repository/n12191434-a3-hookd-api
+    description: Container images for the api service.
+
+  - type: ECR repository
+    arn: arn:aws:ecr:ap-southeast-2:901444280953:repository/n12191434-a3-hookd-worker
+    description: Container images for the worker service.
+
+  - type: ECR repository
+    arn: arn:aws:ecr:ap-southeast-2:901444280953:repository/n12191434-a3-hookd-mcp
+    description: Container images for the mcp service.
+
+  - type: ECR repository
+    arn: arn:aws:ecr:ap-southeast-2:901444280953:repository/n12191434-a3-hookd-web
+    description: Container images for the web service.
+
+  # --- Messaging and scheduling ---
+  - type: SQS queue
+    arn: arn:aws:sqs:ap-southeast-2:901444280953:n12191434-a3-hookd-sync
+    description: Buffers TikTok sync jobs for the workers.
+
+  - type: SQS queue
+    arn: arn:aws:sqs:ap-southeast-2:901444280953:n12191434-a3-hookd-sync-dlq
+    description: Dead-letter queue for sync jobs that keep failing.
+
+  - type: EventBridge Scheduler schedule
+    arn: arn:aws:scheduler:ap-southeast-2:901444280953:schedule/n12191434-a3-hookd-sync/n12191434-a3-hookd-sync-scheduled
+    description: Queues a scheduled sync every 6 hours.
+
+  # --- Cache and secrets ---
+  - type: ElastiCache replication group
+    arn: arn:aws:elasticache:ap-southeast-2:901444280953:replicationgroup:n12191434-a3-hookd-cache
+    description: Valkey cache for dashboard aggregates.
+
+  - type: Secrets Manager secret
+    arn: "<after apply: arn:aws:secretsmanager:ap-southeast-2:901444280953:secret:n12191434-a3-hookd-app-XXXXXX>"
+    description: TikTok API credentials injected into the worker.
+
+  # --- Identity ---
+  - type: Cognito user pool
+    arn: arn:aws:cognito-idp:ap-southeast-2:901444280953:userpool/ap-southeast-2_ZvcLlofqW
+    description: Sign-up, login and JWTs for the app, API and MCP server.
+
+  - type: Cognito user pool client
+    arn: "<after apply: terraform output -raw cognito_client_id>"
+    description: Public app client the React app uses to sign in.
+
+  # --- Observability ---
+  - type: CloudWatch log group
+    arn: arn:aws:logs:ap-southeast-2:901444280953:log-group:/ecs/n12191434-a3-hookd-api
+    description: Container logs for the api service.
+
+  - type: CloudWatch log group
+    arn: arn:aws:logs:ap-southeast-2:901444280953:log-group:/ecs/n12191434-a3-hookd-worker
+    description: Container logs for the worker service.
+
+  - type: CloudWatch log group
+    arn: arn:aws:logs:ap-southeast-2:901444280953:log-group:/ecs/n12191434-a3-hookd-mcp
+    description: Container logs for the mcp service.
+
+  - type: CloudWatch log group
+    arn: arn:aws:logs:ap-southeast-2:901444280953:log-group:/ecs/n12191434-a3-hookd-web
+    description: Container logs for the web service.
+
+  - type: CloudWatch dashboard
+    arn: arn:aws:cloudwatch::901444280953:dashboard/n12191434-a3-hookd
+    description: Shows load, latency, errors, task counts, queue depth and cache hits.
+
+  - type: CloudWatch alarm
+    arn: arn:aws:cloudwatch:ap-southeast-2:901444280953:alarm:n12191434-a3-hookd-dlq-not-empty
+    description: Fires when a sync job lands in the dead-letter queue.
+
+  - type: CloudWatch alarm
+    arn: arn:aws:cloudwatch:ap-southeast-2:901444280953:alarm:n12191434-a3-hookd-alb-5xx
+    description: Fires when the ALB returns too many 5xx errors.
+
+  - type: CloudWatch alarm
+    arn: arn:aws:cloudwatch:ap-southeast-2:901444280953:alarm:n12191434-a3-hookd-worker-queue-backlog
+    description: Scales sync workers out when jobs are waiting in the SQS queue.
+
+  - type: CloudWatch alarm
+    arn: arn:aws:cloudwatch:ap-southeast-2:901444280953:alarm:n12191434-a3-hookd-worker-queue-idle
+    description: Scales sync workers back in to zero when the SQS queue is empty.
+
+metaData:
+  qutUsernameTag: n12191434@qut.edu.au

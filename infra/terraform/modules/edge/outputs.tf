@@ -49,3 +49,8 @@ output "app_url" {
 output "domain_url" {
   value = "https://${var.domain_name}"
 }
+
+output "dns_record_fqdn" {
+  description = "Route 53 alias record pointing the domain at the ALB (null without a zone)"
+  value       = one(aws_route53_record.alb[*].fqdn)
+}
