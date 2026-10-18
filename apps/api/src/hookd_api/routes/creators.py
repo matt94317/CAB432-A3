@@ -7,7 +7,7 @@ import uuid
 
 from fastapi import APIRouter, Response, status
 
-from hookd_api.deps import AssignmentRepo, CampaignRepo, CreatorRepo, CurrentUser
+from hookd_api.deps import AssignmentRepo, CampaignRepo, CreatorRepo, CurrentUser, PostRepo
 from hookd_api.schemas.creator import CreatorCampaign, CreatorCreate, CreatorRead, CreatorUpdate
 from hookd_api.services import creators as service
 
@@ -56,10 +56,14 @@ def update_creator(
 
 @router.delete("/{creator_id}", status_code=status.HTTP_204_NO_CONTENT, responses=NOT_FOUND)
 def delete_creator(
-    creator_id: uuid.UUID, user: CurrentUser, repo: CreatorRepo, assignments: AssignmentRepo
+    creator_id: uuid.UUID,
+    user: CurrentUser,
+    repo: CreatorRepo,
+    assignments: AssignmentRepo,
+    posts: PostRepo,
 ) -> Response:
-    """Remove from the roster. Also takes them off every campaign they're assigned to."""
-    service.delete(repo, assignments, user.organisation_id, creator_id)
+    """Remove from the roster, with their campaign assignments and tracked posts."""
+    service.delete(repo, assignments, posts, user.organisation_id, creator_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

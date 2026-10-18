@@ -7,7 +7,7 @@ import uuid
 
 from fastapi import APIRouter, Response, status
 
-from hookd_api.deps import AssignmentRepo, CampaignRepo, CreatorRepo, CurrentUser
+from hookd_api.deps import AssignmentRepo, CampaignRepo, CreatorRepo, CurrentUser, PostRepo
 from hookd_api.schemas.assignment import AssignmentCreate, AssignmentRead, AssignmentUpdate
 from hookd_api.services import assignments as service
 
@@ -77,7 +77,8 @@ def unassign_creator(
     user: CurrentUser,
     repo: AssignmentRepo,
     campaigns: CampaignRepo,
+    posts: PostRepo,
 ) -> Response:
-    """Take a creator off this campaign. They stay in the roster."""
-    service.unassign(repo, campaigns, user.organisation_id, campaign_id, creator_id)
+    """Take a creator off this campaign, with their posts in it. They stay in the roster."""
+    service.unassign(repo, campaigns, posts, user.organisation_id, campaign_id, creator_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

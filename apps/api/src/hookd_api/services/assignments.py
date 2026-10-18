@@ -17,6 +17,7 @@ from hookd_core.enums import CampaignStatus
 from hookd_core.repositories.assignments import Assignment, AssignmentRepository
 from hookd_core.repositories.campaigns import CampaignRepository
 from hookd_core.repositories.creators import Creator, CreatorRepository
+from hookd_core.repositories.posts import PostRepository
 
 
 class AssignmentNotFound(NotFound):
@@ -40,6 +41,7 @@ def to_read(assignment: Assignment, creator: Creator) -> AssignmentRead:
             platform=creator.platform,
             handle=creator.handle,
             niche=creator.niche,
+            last_synced_at=creator.last_synced_at,
         ),
         target_posts=assignment.target_posts,
         target_period=assignment.target_period,
@@ -135,11 +137,13 @@ def update_target(
 def unassign(
     assignments: AssignmentRepository,
     campaigns: CampaignRepository,
+    posts: PostRepository,
     organisation_id: uuid.UUID,
     campaign_id: uuid.UUID,
     creator_id: uuid.UUID,
 ) -> None:
-    """Take a creator off a campaign. They stay in the roster (US-12)."""
+    """Take a creator off a campaign, with their posts in it. They stay in the roster (US-12)."""
     _editable_campaign(campaigns, organisation_id, campaign_id)
     if not assignments.delete(organisation_id, campaign_id, creator_id):
         raise AssignmentNotFound
+    posts.delete_where(organisation_id, campaign_id=campaign_id, creator_id=creator_id)
