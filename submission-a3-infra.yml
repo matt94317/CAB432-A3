@@ -97,11 +97,11 @@ cloudInfrastructure:
 
   # --- Identity ---
   - type: Cognito user pool
-    arn: arn:aws:cognito-idp:ap-southeast-2:901444280953:userpool/ap-southeast-2_ZvcLlofqW
+    arn: arn:aws:cognito-idp:ap-southeast-2:901444280953:userpool/ap-southeast-2_VPkQKdVzD
     description: Sign-up, login and JWTs for the app, API and MCP server.
 
   - type: Cognito user pool client
-    arn: "<after apply: terraform output -raw cognito_client_id>"
+    arn: 687rfr0r01mvid4qvagb1mca7r
     description: Public app client the React app uses to sign in.
 
   # --- Observability ---

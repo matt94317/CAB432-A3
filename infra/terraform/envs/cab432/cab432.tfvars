@@ -23,7 +23,8 @@ cache_port               = 11211
 
 # Reused (can't create these here)
 existing_ecs_cluster_name     = "n12191434-a2-cluster"
-existing_cognito_user_pool_id = "ap-southeast-2_ZvcLlofqW"
+# Cognito: A3 has its own pool (created by Terraform), not A2's ap-southeast-2_ZvcLlofqW
+existing_cognito_user_pool_id = null
 task_role_arn                 = "arn:aws:iam::901444280953:role/Task-Role-CAB432-ECS"
 execution_role_arn            = "arn:aws:iam::901444280953:role/Execution-Role-CAB432-ECS"
 scheduler_role_arn            = "arn:aws:iam::901444280953:role/CAB432-EventBridge-scheduler-Role"

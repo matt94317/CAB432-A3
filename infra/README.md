@@ -84,7 +84,7 @@ resources in. Each module creates the resource itself when the input is `null`.
 | Security groups | reused `CAB432SG` (ALB + services), `CAB432MemcachedSG` (cache) | can't create security groups |
 | VPC / subnets | shared CAB432 VPC | provided |
 | ECS cluster | reused `n12191434-a2-cluster` | already exists (Container Insights on) |
-| Cognito user pool | reused `ap-southeast-2_ZvcLlofqW`; **new app client created** | one pool per student |
+| Cognito user pool | **created** (`n12191434-a3-hookd`) with its app client | A2's pool (`ap-southeast-2_ZvcLlofqW`) had no email verification; A3 owns its settings |
 | ACM cert, Route 53 zone | reused | already issued / shared zone |
 | Database | **DynamoDB table created** (`n12191434-a3-hookd`, on-demand) | RDS is blocked; back to RDS after A3 |
 | Everything else | created, named `n12191434-a3-hookd-*` | tagged `qut-username`, `purpose = assessment 3`, `project = hookd` |
@@ -125,9 +125,15 @@ VPC and security groups, use port 6379 and our own domain.
 
 ## Cognito
 
-Terraform creates the app client (`terraform output cognito_client_id`) on the
-reused pool. The app expects email sign-in, a required `name` attribute, and a
-public client (no secret) using SRP with token revocation on.
+Terraform creates the A3 user pool and its app client (`terraform output
+cognito_user_pool_id` / `cognito_client_id`): email sign-in, email verified by
+code, a required `name` attribute, and a public client (no secret) using SRP
+with token revocation on. Verification emails use Cognito's default sender
+(50 per day), plenty for A3; switch to SES if that becomes a limit.
+
+They were applied ahead of the rest with `terraform apply -target=module.auth`
+so local development could sign in. A full apply then sees them as done. Keep
+`terraform.tfstate`: without it, the next apply would create a second pool.
 
 For local development, put the pool id and client id in `.env` (`COGNITO_*`,
 for the API) and `apps/web/.env` (`VITE_COGNITO_*`).
