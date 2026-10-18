@@ -18,6 +18,12 @@ ARCHIVED = {409: {"description": "Campaign is archived"}}
 NOT_ASSIGNED = {422: {"description": "The post's creator isn't assigned to the campaign"}}
 
 
+@router.get("/posts", response_model=list[PostRead])
+def list_posts(user: CurrentUser, stores: AllStores) -> list[PostRead]:
+    """Every tracked post across your campaigns, newest first."""
+    return service.list_all(stores, user.organisation_id)
+
+
 @router.get("/campaigns/{campaign_id}/posts", response_model=list[PostRead], responses=NOT_FOUND)
 def list_campaign_posts(
     campaign_id: uuid.UUID, user: CurrentUser, stores: AllStores

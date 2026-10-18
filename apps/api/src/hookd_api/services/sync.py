@@ -3,7 +3,7 @@ the worker (SYNC_MODE)."""
 
 import uuid
 from collections.abc import Sequence
-from datetime import UTC, datetime, tzinfo
+from datetime import UTC, date, datetime, tzinfo
 from typing import Protocol
 
 from hookd_api.schemas.sync import SyncFailure, SyncRun
@@ -12,7 +12,7 @@ from hookd_api.services.campaigns import CampaignArchived
 from hookd_core.enums import CampaignStatus
 from hookd_core.fetchers import FetchError, PostFetcher
 from hookd_core.jobs import JobPublisher, SyncCreatorJob
-from hookd_core.sync import Stores, sync_creator
+from hookd_core.sync import Stores, is_syncable, sync_creator
 
 
 class SyncRunner(Protocol):
@@ -69,6 +69,22 @@ class QueuedSync:
     ) -> SyncRun:
         self.publisher.publish([SyncCreatorJob(organisation_id, c) for c in creator_ids])
         return SyncRun(mode="queued", creators=len(creator_ids))
+
+
+def sync_workspace(
+    stores: Stores,
+    runner: SyncRunner,
+    organisation_id: uuid.UUID,
+    today: date,
+    lookback_days: int,
+) -> SyncRun:
+    """Sync every creator on a campaign that's being tracked now (each creator once)."""
+    creator_ids: dict[uuid.UUID, None] = {}
+    for a in stores.assignments.list(organisation_id):
+        campaign = stores.campaigns.get(organisation_id, a.campaign_id)
+        if campaign is not None and is_syncable(campaign, today, lookback_days):
+            creator_ids[a.creator_id] = None
+    return runner.run(stores, organisation_id, list(creator_ids))
 
 
 def sync_campaign(

@@ -178,3 +178,14 @@ def test_other_organisations_posts_are_not_found(client, login, alex, summer):
     move = {"campaign_id": summer["id"]}
     assert client.patch(f"/api/posts/{post['id']}", json=move, headers=sam).status_code == 404
     assert client.delete(f"/api/posts/{post['id']}", headers=sam).status_code == 404
+
+
+def test_list_every_post_newest_first(client, login, alex, summer, autumn):
+    add(client, alex, summer, posted_on=(TODAY - timedelta(days=2)).isoformat())
+    add(client, alex, autumn, url="https://www.tiktok.com/@lou/video/888888")
+    removed = add(client, alex, summer, url="https://www.tiktok.com/@lou/video/777777").json()
+    client.delete(f"/api/posts/{removed['id']}", headers=alex)
+
+    posts = client.get("/api/posts", headers=alex).json()
+    assert [p["campaign_id"] for p in posts] == [autumn["id"], summer["id"]]
+    assert client.get("/api/posts", headers=login("sam")).json() == []
