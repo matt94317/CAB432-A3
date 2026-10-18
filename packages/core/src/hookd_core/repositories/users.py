@@ -45,8 +45,6 @@ class UserRepository(Protocol):
         """
         ...
 
-    def get_organisation(self, organisation_id: uuid.UUID) -> Organisation | None: ...
-
 
 class InMemoryUserRepository:
     """Process-local store. Data is lost on restart."""
@@ -66,6 +64,3 @@ class InMemoryUserRepository:
             self._organisations[organisation.id] = organisation
             self._users[user.cognito_sub] = user
         return user
-
-    def get_organisation(self, organisation_id: uuid.UUID) -> Organisation | None:
-        return self._organisations.get(organisation_id)

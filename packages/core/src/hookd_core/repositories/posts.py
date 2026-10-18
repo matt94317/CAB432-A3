@@ -1,7 +1,12 @@
 """Post storage interface and an in-memory implementation.
 
-A post belongs to one creator and, at most, one campaign. A post the manager
-removes is kept, flagged `removed`, so the next sync doesn't add it back.
+A post belongs to one creator and one campaign. A post the manager removes is
+kept, flagged `removed`, so the next sync doesn't add it back.
+
+A post's id is derived from its natural key (organisation, creator, platform,
+platform id), so the same TikTok video always has the same id. Looking it up by
+platform id is then a plain key lookup in any store, and two syncs racing on the
+same video write the same record instead of a duplicate.
 """
 
 import uuid
@@ -12,9 +17,17 @@ from typing import Protocol
 
 from hookd_core.enums import MatchSource, Platform
 
+_POST_NAMESPACE = uuid.UUID("5b0f1c4e-7d0a-4c8e-9a51-2f3d6b8e1a77")
+
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+def post_id(
+    organisation_id: uuid.UUID, creator_id: uuid.UUID, platform: Platform, external_id: str
+) -> uuid.UUID:
+    return uuid.uuid5(_POST_NAMESPACE, f"{organisation_id}/{creator_id}/{platform}/{external_id}")
 
 
 @dataclass(frozen=True)
@@ -35,9 +48,12 @@ class Post:
     shares: int = 0
     removed: bool = False
     last_synced_at: datetime | None = None  # None until sync has seen it (manual posts)
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
     created_at: datetime = field(default_factory=_now)
     updated_at: datetime = field(default_factory=_now)
+
+    @property
+    def id(self) -> uuid.UUID:
+        return post_id(self.organisation_id, self.creator_id, self.platform, self.external_id)
 
 
 class PostRepository(Protocol):
@@ -107,16 +123,8 @@ class InMemoryPostRepository:
         platform: Platform,
         external_id: str,
     ) -> Post | None:
-        return next(
-            (
-                p
-                for p in self._items.values()
-                if p.organisation_id == organisation_id
-                and p.creator_id == creator_id
-                and p.platform == platform
-                and p.external_id == external_id
-            ),
-            None,
+        return self.get(
+            organisation_id, post_id(organisation_id, creator_id, platform, external_id)
         )
 
     def _matching(
