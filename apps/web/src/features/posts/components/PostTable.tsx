@@ -5,11 +5,18 @@ import Icon from "@/components/ui/Icon";
 import Menu from "@/components/ui/Menu";
 import { formatCount, formatExact } from "@/lib/format";
 
+export type PostSort = "posted" | "views" | "engagement";
+
 interface PostTableProps {
   posts: Post[];
   editable: boolean;
-  /** On a creator's page every post is theirs, so show the campaign instead. */
+  /** Adds a campaign column. */
   campaignName?: (post: Post) => string;
+  /** Hide the creator column, e.g. on a creator's own page. */
+  showCreator?: boolean;
+  /** Makes the views, engagement rate and posted headings sort buttons. */
+  sort?: PostSort;
+  onSort?: (sort: PostSort) => void;
   onMove: (post: Post) => void;
   onRemove: (post: Post) => void;
 }
@@ -24,15 +31,43 @@ const METRICS = [
 const dateFormat = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" });
 const timeFormat = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
 
+export function engagementRatio(post: Post): number | null {
+  return post.views ? (post.likes + post.comments + post.shares) / post.views : null;
+}
+
 function engagementRate(post: Post): string | null {
-  if (!post.views) return null;
-  return `${(((post.likes + post.comments + post.shares) / post.views) * 100).toFixed(1)}%`;
+  const ratio = engagementRatio(post);
+  return ratio === null ? null : `${(ratio * 100).toFixed(1)}%`;
 }
 
 // Posts with views, likes, comments, shares and engagement rate (US-17), in the
 // design's post tracking table. Scrolls sideways on small screens.
-export default function PostTable({ posts, editable, campaignName, onMove, onRemove }: PostTableProps) {
+export default function PostTable({
+  posts,
+  editable,
+  campaignName,
+  showCreator = true,
+  sort,
+  onSort,
+  onMove,
+  onRemove,
+}: PostTableProps) {
   const heading = "px-3 text-[9px] font-semibold tracking-wide text-ink-muted";
+  // A heading that sorts the table when the page supports it ("VIEWS ↓")
+  const sortable = (key: PostSort, label: string) =>
+    onSort ? (
+      <button
+        type="button"
+        onClick={() => onSort(key)}
+        aria-pressed={sort === key}
+        className={`font-semibold tracking-wide hover:text-ink ${sort === key ? "text-ink" : ""}`}
+      >
+        {label}
+        {sort === key && " ↓"}
+      </button>
+    ) : (
+      label
+    );
   return (
     <div className="overflow-x-auto rounded-card border border-line bg-surface">
       <table className="w-full min-w-[52rem] text-left">
@@ -41,19 +76,31 @@ export default function PostTable({ posts, editable, campaignName, onMove, onRem
             <th scope="col" className={`${heading} pl-5`}>
               POST
             </th>
-            <th scope="col" className={heading}>
-              {campaignName ? "CAMPAIGN" : "CREATOR"}
-            </th>
+            {showCreator && (
+              <th scope="col" className={heading}>
+                CREATOR
+              </th>
+            )}
+            {campaignName && (
+              <th scope="col" className={heading}>
+                CAMPAIGN
+              </th>
+            )}
             {METRICS.map((m) => (
-              <th key={m.key} scope="col" className={`${heading} text-right`}>
-                {m.label}
+              <th
+                key={m.key}
+                scope="col"
+                className={`${heading} text-right`}
+                aria-sort={sort === "views" && m.key === "views" ? "descending" : undefined}
+              >
+                {m.key === "views" ? sortable("views", m.label) : m.label}
               </th>
             ))}
-            <th scope="col" className={`${heading} text-right`}>
-              ENG. RATE
+            <th scope="col" className={`${heading} text-right`} aria-sort={sort === "engagement" ? "descending" : undefined}>
+              {sortable("engagement", "ENG. RATE")}
             </th>
-            <th scope="col" className={heading}>
-              POSTED
+            <th scope="col" className={heading} aria-sort={sort === "posted" ? "descending" : undefined}>
+              {sortable("posted", "POSTED")}
             </th>
             <th scope="col" className="pr-5">
               <span className="sr-only">Actions</span>
@@ -76,12 +123,8 @@ export default function PostTable({ posts, editable, campaignName, onMove, onRem
                     {post.last_synced_at === null && " · not synced"}
                   </p>
                 </td>
-                <td className="px-3 py-[13px]">
-                  {campaignName ? (
-                    <Link to={`/campaigns/${post.campaign_id}`} className="text-[11px] text-ink-muted hover:text-ink">
-                      {campaignName(post)}
-                    </Link>
-                  ) : (
+                {showCreator && (
+                  <td className="px-3 py-[13px]">
                     <div className="flex items-center gap-2">
                       <Avatar name={post.creator.name} size="sm" />
                       <div className="min-w-0">
@@ -94,8 +137,18 @@ export default function PostTable({ posts, editable, campaignName, onMove, onRem
                         <p className="truncate text-[9px] text-ink-muted">@{post.creator.handle}</p>
                       </div>
                     </div>
-                  )}
-                </td>
+                  </td>
+                )}
+                {campaignName && (
+                  <td className="max-w-44 px-3 py-[13px]">
+                    <Link
+                      to={`/campaigns/${post.campaign_id}`}
+                      className="line-clamp-2 text-[11px] text-ink-muted hover:text-ink"
+                    >
+                      {campaignName(post)}
+                    </Link>
+                  </td>
+                )}
                 {METRICS.map((m) => (
                   <td
                     key={m.key}

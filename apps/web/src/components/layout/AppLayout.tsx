@@ -10,6 +10,7 @@ const SECTIONS: [prefix: string, label: string][] = [
   ["/overview", "Overview"],
   ["/campaigns", "Campaigns"],
   ["/creators", "Creators"],
+  ["/posts", "Post tracking"],
 ];
 
 // Signed-in shell: sidebar (a drawer on small screens), header with breadcrumb, page.

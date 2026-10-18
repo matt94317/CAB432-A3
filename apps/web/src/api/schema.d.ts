@@ -220,6 +220,26 @@ export interface paths {
         patch: operations["update_target_api_campaigns__campaign_id__creators__creator_id__patch"];
         trace?: never;
     };
+    "/api/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Posts
+         * @description Every tracked post across your campaigns, newest first.
+         */
+        get: operations["list_posts_api_posts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaign_id}/posts": {
         parameters: {
             query?: never;
@@ -347,6 +367,26 @@ export interface paths {
         get: operations["creator_performance_api_creators__creator_id__performance_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync Workspace
+         * @description Pull the latest posts and metrics for every creator on a campaign being tracked now.
+         */
+        post: operations["sync_workspace_api_sync_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2002,6 +2042,26 @@ export interface operations {
             };
         };
     };
+    list_posts_api_posts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostRead"][];
+                };
+            };
+        };
+    };
     list_campaign_posts_api_campaigns__campaign_id__posts_get: {
         parameters: {
             query?: never;
@@ -2298,6 +2358,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_workspace_api_sync_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncRun"];
                 };
             };
         };

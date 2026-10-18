@@ -135,6 +135,7 @@ export default function CreatorDetailPage() {
                 posts={performance.data.posts}
                 editable={false}
                 campaignName={(post) => campaignNames.get(post.campaign_id) ?? "Campaign"}
+                showCreator={false}
                 onMove={() => {}}
                 onRemove={() => {}}
               />
