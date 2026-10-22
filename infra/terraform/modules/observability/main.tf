@@ -117,10 +117,11 @@ locals {
     {
       title = "Cache hits / misses"
       stat  = "Sum"
-      metrics = flatten([for id in var.cache_cluster_ids : [
+      # concat(...) joins one level; flatten would collapse the rows into one list of strings
+      metrics = concat([for id in var.cache_cluster_ids : [
         ["AWS/ElastiCache", "CacheHits", "CacheClusterId", id],
         ["AWS/ElastiCache", "CacheMisses", "CacheClusterId", id],
-      ]])
+      ]]...)
     },
   ]
 }
