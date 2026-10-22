@@ -67,6 +67,16 @@ aws secretsmanager put-secret-value --profile CAB432 \
 scripts/deploy.sh worker     # tasks read secrets at start
 ```
 
+To watch auto scaling, `scripts/scaling-test.sh` fills the sync queue with
+fake jobs (worker 0 → 4 → 0) and then loads `/api/health` on the ALB with `ab`
+(api 1 → 4), printing task counts, queue depth and firing alarms every 30s:
+
+```bash
+scripts/scaling-test.sh            # worker, then api (~25 min)
+scripts/scaling-test.sh worker     # or just one part
+scripts/scaling-test.sh status     # one status line, no load
+```
+
 Useful outputs: `terraform output app_url`, and
 `terraform output -raw gradescope_infra_yaml > ../../../../submission-a3-infra.yml` to
 refresh the Gradescope file at the repo root.
