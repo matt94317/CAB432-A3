@@ -1,7 +1,8 @@
 # Python
 __pycache__/
 *.py[cod]
-.venv/
+.venv
+*.nosync
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
@@ -18,9 +19,13 @@ dist/
 # Terraform / CDK
 .terraform/
 *.tfstate*
+*.tfplan
 cdk.out/
 
 # OS / editor
 .DS_Store
 .idea/
 .vscode/
+
+# Claude Code agent worktrees
+.claude/worktrees/
