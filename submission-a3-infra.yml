@@ -1,18 +1,17 @@
-# CAB432 A3 infrastructure for Gradescope (template: submission-a3-infra.yml).
+# CAB432 A3 infrastructure for Gradescope.
 #
-# Values marked "<after apply: ...>" get a random ID from AWS when created. After
-# `terraform apply`, regenerate this whole file from the real resources:
+# ARNs match the applied Terraform state. To check against the real resources:
 #   cd infra/terraform/envs/cab432
-#   terraform output -raw gradescope_infra_yaml > ../../../../submission-a3-infra.yml
+#   terraform output -raw gradescope_infra_yaml
 
 cloudInfrastructure:
   # --- Edge and routing ---
   - type: CloudFront distribution
-    arn: "<after apply: CloudFront distribution ARN, from gradescope_infra_yaml>"
+    arn: arn:aws:cloudfront::901444280953:distribution/E1PYYW0P10C5VV
     description: Edge cache for the web app; passes /api and /mcp to the ALB.
 
   - type: Application Load Balancer
-    arn: "<after apply: ALB ARN, from gradescope_infra_yaml>"
+    arn: arn:aws:elasticloadbalancing:ap-southeast-2:901444280953:loadbalancer/app/n12191434-a3-hookd/501188705fa384d6
     description: HTTPS entry point routing /api, /mcp and the web app to their services.
 
   - type: Route 53 record
@@ -92,7 +91,7 @@ cloudInfrastructure:
     description: Valkey cache for dashboard aggregates.
 
   - type: Secrets Manager secret
-    arn: "<after apply: arn:aws:secretsmanager:ap-southeast-2:901444280953:secret:n12191434-a3-hookd-app-XXXXXX>"
+    arn: arn:aws:secretsmanager:ap-southeast-2:901444280953:secret:n12191434-a3-hookd-app-1GKcY1
     description: TikTok API credentials injected into the worker.
 
   # --- Identity ---
