@@ -22,7 +22,7 @@ cache_security_group_ids = ["sg-07707a36aa1599475"]
 cache_port               = 11211
 
 # Reused (can't create these here)
-existing_ecs_cluster_name     = "n12191434-a2-cluster"
+existing_ecs_cluster_name = "n12191434-a2-cluster"
 # Cognito: A3 has its own pool (created by Terraform), not A2's ap-southeast-2_ZvcLlofqW
 existing_cognito_user_pool_id = null
 task_role_arn                 = "arn:aws:iam::901444280953:role/Task-Role-CAB432-ECS"
@@ -38,3 +38,6 @@ dns_allow_overwrite = true
 
 enable_cloudfront = true
 tiktok_mode       = "mock"
+
+# Students can't set log retention (logs:PutRetentionPolicy is denied)
+log_retention_days = 0

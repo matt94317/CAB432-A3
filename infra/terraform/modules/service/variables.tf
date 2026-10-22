@@ -94,8 +94,9 @@ variable "health_check_grace_period_seconds" {
 }
 
 variable "log_retention_days" {
-  type    = number
-  default = 14
+  description = "0 = never expire (no retention policy is set)"
+  type        = number
+  default     = 14
 }
 
 # --- Autoscaling (all optional) ---

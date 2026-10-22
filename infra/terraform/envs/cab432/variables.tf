@@ -142,3 +142,9 @@ variable "extra_environment" {
   type        = map(map(string))
   default     = {}
 }
+
+variable "log_retention_days" {
+  description = "ECS log retention; 0 = never expire (CAB432 denies logs:PutRetentionPolicy)"
+  type        = number
+  default     = 14
+}
