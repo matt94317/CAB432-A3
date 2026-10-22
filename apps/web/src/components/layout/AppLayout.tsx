@@ -7,6 +7,7 @@ import BrandMark from "./BrandMark";
 import Sidebar from "./Sidebar";
 
 const SECTIONS: [prefix: string, label: string][] = [
+  ["/overview", "Overview"],
   ["/campaigns", "Campaigns"],
   ["/creators", "Creators"],
 ];

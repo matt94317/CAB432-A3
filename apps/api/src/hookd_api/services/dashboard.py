@@ -66,7 +66,7 @@ def _period_fields(progress: CreatorProgress) -> dict:
     }
 
 
-def _daily(posts: list[Post], start: date, end: date, tz: tzinfo) -> list[DailyMetrics]:
+def daily_metrics(posts: list[Post], start: date, end: date, tz: tzinfo) -> list[DailyMetrics]:
     by_day: dict[date, list[Post]] = defaultdict(list)
     for p in posts:
         by_day[p.posted_at.astimezone(tz).date()].append(p)
@@ -117,7 +117,7 @@ def campaign_dashboard(
         creators=rows,
         behind_count=sum(r.status == ProgressStatus.BEHIND for r in rows),
         totals=metrics(posts),
-        daily=_daily(posts, campaign.start_date, min(today, campaign.end_date), tz),
+        daily=daily_metrics(posts, campaign.start_date, min(today, campaign.end_date), tz),
         last_synced_at=min(synced) if synced and None not in synced else None,  # type: ignore[type-var]
         generated_at=datetime.now(UTC),
     )

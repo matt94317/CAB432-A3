@@ -7,6 +7,7 @@
   --color-brand: var(--hk-color-accent);
   --color-brand-soft: var(--hk-color-accent-soft);
   --color-brand-muted: var(--hk-color-accent-muted);
+  --color-brand-strong: var(--hk-color-accent-strong);
 
   --color-canvas: var(--hk-color-canvas);
   --color-surface: var(--hk-color-surface);

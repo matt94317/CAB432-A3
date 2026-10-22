@@ -6,6 +6,8 @@
   --hk-color-accent: #7350d4;
   --hk-color-accent-soft: #f0ebfb;
   --hk-color-accent-muted: #d9c9f6;
+  --hk-color-accent-strong: #5835b3; /* text on accent-soft */
+  --hk-color-accent-compare: #a48ae6; /* comparison series; passes the dataviz palette checks */
 
   /* Surfaces and lines */
   --hk-color-canvas: #f7f7f4; /* page background */

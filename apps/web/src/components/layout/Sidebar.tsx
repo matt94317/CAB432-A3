@@ -17,6 +17,7 @@ interface SidebarProps {
 export default function Sidebar({ name, email, signingOut, onSignOut, onNavigate }: SidebarProps) {
   const activeCampaigns = useCampaigns("active").data?.length;
   const items: { to: string; label: string; icon: IconName; count?: number }[] = [
+    { to: "/overview", label: "Overview", icon: "layout-dashboard" },
     { to: "/campaigns", label: "Campaigns", icon: "megaphone", count: activeCampaigns },
     { to: "/creators", label: "Creators", icon: "users" },
   ];

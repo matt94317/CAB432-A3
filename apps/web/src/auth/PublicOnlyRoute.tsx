@@ -7,6 +7,6 @@ export default function PublicOnlyRoute() {
   const { status } = useAuth();
 
   if (status === "loading") return <FullPageSpinner />;
-  if (status === "signedIn") return <Navigate to="/campaigns" replace />;
+  if (status === "signedIn") return <Navigate to="/overview" replace />;
   return <Outlet />;
 }

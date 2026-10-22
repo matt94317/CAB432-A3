@@ -2,6 +2,7 @@ import alertIcon from "@/assets/icons/circle-alert.svg";
 import arrowRight from "@/assets/icons/arrow-right.svg";
 import asterisk from "@/assets/icons/asterisk.svg";
 import calendar from "@/assets/icons/calendar.svg";
+import calendarClock from "@/assets/icons/calendar-clock.svg";
 import checkIcon from "@/assets/icons/circle-check.svg";
 import chevronDown from "@/assets/icons/chevron-down.svg";
 import chevronRight from "@/assets/icons/chevron-right.svg";
@@ -11,10 +12,13 @@ import ellipsis from "@/assets/icons/ellipsis.svg";
 import externalLink from "@/assets/icons/external-link.svg";
 import eye from "@/assets/icons/eye.svg";
 import eyeOff from "@/assets/icons/eye-off.svg";
+import fileText from "@/assets/icons/file-text.svg";
 import heart from "@/assets/icons/heart.svg";
+import layoutDashboard from "@/assets/icons/layout-dashboard.svg";
 import megaphone from "@/assets/icons/megaphone.svg";
 import music from "@/assets/icons/music-2.svg";
 import plus from "@/assets/icons/plus.svg";
+import refresh from "@/assets/icons/refresh-cw.svg";
 import search from "@/assets/icons/search.svg";
 import sparkles from "@/assets/icons/sparkles.svg";
 import trendingUp from "@/assets/icons/trending-up.svg";
@@ -27,6 +31,7 @@ const ICONS = {
   "arrow-right": arrowRight,
   asterisk,
   calendar,
+  "calendar-clock": calendarClock,
   check: checkIcon,
   "chevron-down": chevronDown,
   "chevron-right": chevronRight,
@@ -36,10 +41,13 @@ const ICONS = {
   "external-link": externalLink,
   eye,
   "eye-off": eyeOff,
+  "file-text": fileText,
   heart,
+  "layout-dashboard": layoutDashboard,
   megaphone,
   music,
   plus,
+  refresh,
   search,
   sparkles,
   "trending-up": trendingUp,

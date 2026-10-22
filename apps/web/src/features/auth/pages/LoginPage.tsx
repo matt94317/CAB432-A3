@@ -41,7 +41,7 @@ export default function LoginPage() {
         return;
       }
       await refresh();
-      navigate(state.from ?? "/campaigns", { replace: true });
+      navigate(state.from ?? "/overview", { replace: true });
     } catch (err) {
       setError(authErrorMessage(err));
     } finally {

@@ -45,7 +45,7 @@ export default function ConfirmSignUpPage() {
         try {
           await autoSignIn();
           await refresh();
-          navigate("/campaigns", { replace: true });
+          navigate("/overview", { replace: true });
         } catch {
           goToLogin();
         }
