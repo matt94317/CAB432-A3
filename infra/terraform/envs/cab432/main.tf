@@ -1,5 +1,5 @@
 # Hookd Tracker on the CAB432 account.
-# Account-specific choices live in cab432.tfvars; modules are shared with envs/personal.
+# Account-specific choices live in cab432.tfvars; the modules are shared by every account.
 
 locals {
   name = var.name_prefix

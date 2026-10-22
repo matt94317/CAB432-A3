@@ -16,7 +16,6 @@ terraform/
     observability   CloudWatch dashboard and alarms
   envs/
     cab432/       the CAB432 shared account (assignment 3)
-    personal/     notes for our own account later
 ```
 
 ## What gets deployed
@@ -109,7 +108,8 @@ Things to know:
   `DeleteItem` and `Query` on the table and its `gsi1` index. The reused
   `Task-Role-CAB432-ECS` was only checked for put and query (2026-10-17), so
   confirm GetItem and DeleteItem after the first deploy (e.g. sign in and
-  delete a campaign). `envs/personal` creates its own role with exactly these.
+  delete a campaign). In our own account the cluster module creates a role with
+  exactly these (see [Personal account later](#personal-account-later)).
 
 ## State
 
@@ -119,9 +119,28 @@ Local state for now (`*.tfstate` is gitignored), so apply from one machine.
 
 ## Personal account later
 
-`envs/personal/README.md` lists what changes: set the reuse inputs to `null` so
-the modules create the cluster, roles, user pool and scheduler role, add our own
-VPC and security groups, use port 6379 and our own domain.
+To run Hookd Tracker in our own AWS account after the assignment, copy
+`envs/cab432` to `envs/personal` and change the variables below; the modules
+stay the same. Setting the reuse inputs to `null` makes the modules create the
+resource themselves.
+
+| Variable | CAB432 | Personal |
+|---|---|---|
+| `aws_profile`, `account_id` | `CAB432`, 901444280953 | own profile and account |
+| `name_prefix`, tags | `n12191434-a3-hookd`, QUT tags | e.g. `hookd-prod`; drop `qut_username`/`purpose` from `default_tags` |
+| `existing_ecs_cluster_name` | `n12191434-a2-cluster` | `null` (module creates a cluster with Container Insights) |
+| `task_role_arn`, `execution_role_arn` | pre-made CAB432 roles | `null` (module creates least-privilege roles, including the DynamoDB actions above) |
+| `scheduler_role_arn` | `CAB432-EventBridge-scheduler-Role` | `null` (queue module creates one) |
+| `existing_cognito_user_pool_id` | `null` (A3 creates its own pool) | `null` |
+| Security groups | `CAB432SG`, `CAB432MemcachedSG` | own SGs: ALB 443 from anywhere, services 8080 from the ALB SG, cache 6379 from the service SG |
+| `cache_port` | 11211 (only port the CAB432 SG opens) | 6379 |
+| `vpc_id`, subnets | shared CAB432 VPC | own VPC; add a `network` module (VPC, 2+ AZs, NAT) |
+| Domain / cert | `n12191434.cab432.com` | `app.hookdtracker.com`, its own ACM cert and zone |
+| `dns_allow_overwrite` | `true` (see DNS above) | not needed |
+| `log_retention_days` | `0` (`logs:PutRetentionPolicy` is denied) | default 14 |
+
+Also add a remote state backend (the S3 block in `versions.tf`) and, when we
+move back to RDS, a database module.
 
 ## Cognito
 
