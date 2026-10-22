@@ -13,7 +13,6 @@ import ellipsis from "@/assets/icons/ellipsis.svg";
 import externalLink from "@/assets/icons/external-link.svg";
 import eye from "@/assets/icons/eye.svg";
 import eyeOff from "@/assets/icons/eye-off.svg";
-import fileText from "@/assets/icons/file-text.svg";
 import heart from "@/assets/icons/heart.svg";
 import layoutDashboard from "@/assets/icons/layout-dashboard.svg";
 import megaphone from "@/assets/icons/megaphone.svg";
@@ -43,7 +42,6 @@ const ICONS = {
   "external-link": externalLink,
   eye,
   "eye-off": eyeOff,
-  "file-text": fileText,
   heart,
   "layout-dashboard": layoutDashboard,
   megaphone,

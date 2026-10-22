@@ -7,7 +7,7 @@ apps/web
 apps/www
 packages/ui
 infra
-Docs
+docs
 *.pdf
 *.md
 .env
