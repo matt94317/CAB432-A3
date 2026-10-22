@@ -1,8 +1,10 @@
 import { type FormEvent, useState } from "react";
+import { useCampaigns } from "@/api/queries/campaigns";
 import { useAddPost } from "@/api/queries/posts";
 import Alert from "@/components/ui/Alert";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
+import SelectField from "@/components/ui/SelectField";
 import TextField from "@/components/ui/TextField";
 import { toIsoDate } from "@/lib/format";
 
@@ -17,7 +19,8 @@ type Metric = (typeof METRICS)[number]["key"];
 
 interface AddPostDialogProps {
   open: boolean;
-  campaignId: string;
+  /** Add to this campaign; omit to let the manager pick one. */
+  campaignId?: string;
   onClose: () => void;
 }
 
@@ -31,7 +34,10 @@ export default function AddPostDialog({ open, campaignId, onClose }: AddPostDial
 }
 
 function AddPostForm({ campaignId, onClose }: Omit<AddPostDialogProps, "open">) {
-  const add = useAddPost(campaignId);
+  const add = useAddPost();
+  const campaigns = useCampaigns("active");
+  const [chosenCampaign, setChosenCampaign] = useState("");
+  const targetCampaign = campaignId ?? (chosenCampaign || campaigns.data?.[0]?.id || "");
   const [url, setUrl] = useState("");
   const [postedOn, setPostedOn] = useState(toIsoDate(new Date()));
   const [caption, setCaption] = useState("");
@@ -40,6 +46,7 @@ function AddPostForm({ campaignId, onClose }: Omit<AddPostDialogProps, "open">) 
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!targetCampaign) return setCheckError("Create a campaign first, then add posts to it.");
     if (!url.trim()) return setCheckError("Paste the post's TikTok link.");
     const counts = Object.fromEntries(METRICS.map(({ key }) => [key, Number(metrics[key] || 0)])) as Record<
       Metric,
@@ -49,7 +56,10 @@ function AddPostForm({ campaignId, onClose }: Omit<AddPostDialogProps, "open">) 
       return setCheckError("Metrics must be whole numbers, 0 or more.");
     }
     setCheckError(null);
-    add.mutate({ url: url.trim(), posted_on: postedOn, caption: caption.trim(), ...counts }, { onSuccess: onClose });
+    add.mutate(
+      { campaignId: targetCampaign, body: { url: url.trim(), posted_on: postedOn, caption: caption.trim(), ...counts } },
+      { onSuccess: onClose },
+    );
   }
 
   const shownError = checkError ?? add.error?.message;
@@ -61,6 +71,14 @@ function AddPostForm({ campaignId, onClose }: Omit<AddPostDialogProps, "open">) 
         add here.
       </p>
       {shownError && <Alert>{shownError}</Alert>}
+      {!campaignId && (
+        <SelectField
+          label="Campaign"
+          value={targetCampaign}
+          onChange={(e) => setChosenCampaign(e.target.value)}
+          options={(campaigns.data ?? []).map((c) => ({ value: c.id, label: `${c.name} (${c.brand})` }))}
+        />
+      )}
       <TextField
         label="TikTok link"
         type="url"

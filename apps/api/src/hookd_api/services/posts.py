@@ -86,6 +86,16 @@ def list_for_campaign(
     ]
 
 
+def list_all(stores: Stores, organisation_id: uuid.UUID) -> list[PostRead]:
+    """Every tracked post across campaigns, newest first."""
+    creators = {c.id: c for c in stores.creators.list(organisation_id)}
+    return [
+        to_read(p, creators[p.creator_id])
+        for p in stores.posts.list(organisation_id)
+        if p.creator_id in creators
+    ]
+
+
 def add_manual(
     stores: Stores,
     organisation_id: uuid.UUID,

@@ -11,11 +11,20 @@ export type SyncRun = components["schemas"]["SyncRun"];
 
 export const postKeys = {
   all: ["posts"] as const,
+  everywhere: ["posts", "all"] as const,
   campaign: (campaignId: string) => ["posts", campaignId] as const,
 };
 
 const campaignPath = (campaignId: string) => ({ params: { path: { campaign_id: campaignId } } });
 const postPath = (postId: string) => ({ params: { path: { post_id: postId } } });
+
+// Every tracked post across campaigns (the post tracking page)
+export function useAllPosts() {
+  return useQuery({
+    queryKey: postKeys.everywhere,
+    queryFn: () => unwrap(api.GET("/api/posts")),
+  });
+}
 
 export function useCampaignPosts(campaignId: string) {
   return useQuery({
@@ -39,8 +48,8 @@ function usePostMutation<TVariables, TData>(mutationFn: (variables: TVariables) 
   });
 }
 
-export function useAddPost(campaignId: string) {
-  return usePostMutation((body: PostCreate) =>
+export function useAddPost() {
+  return usePostMutation(({ campaignId, body }: { campaignId: string; body: PostCreate }) =>
     unwrap(api.POST("/api/campaigns/{campaign_id}/posts", { ...campaignPath(campaignId), body })),
   );
 }
@@ -53,6 +62,11 @@ export function useMovePost() {
 
 export function useRemovePost() {
   return usePostMutation((postId: string) => unwrap(api.DELETE("/api/posts/{post_id}", postPath(postId))));
+}
+
+// Sync every creator on a campaign being tracked now
+export function useSyncAll() {
+  return usePostMutation(() => unwrap(api.POST("/api/sync")));
 }
 
 export function useSyncCampaign(campaignId: string) {

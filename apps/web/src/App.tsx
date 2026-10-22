@@ -10,6 +10,7 @@ import CreatorDetailPage from "@/features/creators/pages/CreatorDetailPage";
 import CreatorListPage from "@/features/creators/pages/CreatorListPage";
 import CampaignDashboardPage from "@/features/dashboard/pages/CampaignDashboardPage";
 import OverviewPage from "@/features/overview/pages/OverviewPage";
+import PostTrackingPage from "@/features/posts/pages/PostTrackingPage";
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/campaigns" element={<CampaignListPage />} />
           <Route path="/campaigns/:campaignId" element={<CampaignDashboardPage />} />
           <Route path="/creators" element={<CreatorListPage />} />
+          <Route path="/posts" element={<PostTrackingPage />} />
           <Route path="/creators/:creatorId" element={<CreatorDetailPage />} />
         </Route>
       </Route>

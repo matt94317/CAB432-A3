@@ -95,9 +95,10 @@ module "edge" {
 # --- Services ---
 
 module "api" {
-  source = "../../modules/service"
-  name   = "${local.name}-api"
-  image  = local.images.api
+  source             = "../../modules/service"
+  name               = "${local.name}-api"
+  image              = local.images.api
+  log_retention_days = var.log_retention_days
 
   cluster_name       = module.cluster.cluster_name
   cluster_arn        = module.cluster.cluster_arn
@@ -125,9 +126,10 @@ module "api" {
 }
 
 module "worker" {
-  source = "../../modules/service"
-  name   = "${local.name}-worker"
-  image  = local.images.worker
+  source             = "../../modules/service"
+  name               = "${local.name}-worker"
+  image              = local.images.worker
+  log_retention_days = var.log_retention_days
 
   cluster_name       = module.cluster.cluster_name
   cluster_arn        = module.cluster.cluster_arn
@@ -157,9 +159,10 @@ module "worker" {
 }
 
 module "mcp" {
-  source = "../../modules/service"
-  name   = "${local.name}-mcp"
-  image  = local.images.mcp
+  source             = "../../modules/service"
+  name               = "${local.name}-mcp"
+  image              = local.images.mcp
+  log_retention_days = var.log_retention_days
 
   cluster_name       = module.cluster.cluster_name
   cluster_arn        = module.cluster.cluster_arn
@@ -180,9 +183,10 @@ module "mcp" {
 }
 
 module "web" {
-  source = "../../modules/service"
-  name   = "${local.name}-web"
-  image  = local.images.web
+  source             = "../../modules/service"
+  name               = "${local.name}-web"
+  image              = local.images.web
+  log_retention_days = var.log_retention_days
 
   cluster_name       = module.cluster.cluster_name
   cluster_arn        = module.cluster.cluster_arn

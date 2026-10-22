@@ -8,6 +8,7 @@ import chevronDown from "@/assets/icons/chevron-down.svg";
 import chevronRight from "@/assets/icons/chevron-right.svg";
 import chevronsUpDown from "@/assets/icons/chevrons-up-down.svg";
 import clapperboard from "@/assets/icons/clapperboard.svg";
+import download from "@/assets/icons/download.svg";
 import ellipsis from "@/assets/icons/ellipsis.svg";
 import externalLink from "@/assets/icons/external-link.svg";
 import eye from "@/assets/icons/eye.svg";
@@ -37,6 +38,7 @@ const ICONS = {
   "chevron-right": chevronRight,
   "chevrons-up-down": chevronsUpDown,
   clapperboard,
+  download,
   ellipsis,
   "external-link": externalLink,
   eye,

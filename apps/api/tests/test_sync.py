@@ -105,3 +105,18 @@ def test_queued_mode_publishes_one_job_per_creator(client, alex, summer, lou):
     run = sync(client, alex, summer).json()
     assert (run["mode"], run["creators"]) == ("queued", 1)
     assert [str(j.creator_id) for j in publisher.jobs] == [lou["id"]]
+
+
+def test_sync_everything_syncs_each_live_creator_once(
+    client, tiktok, make_campaign, make_creator, assign, alex, summer, lou
+):
+    other = make_campaign(alex, name="Autumn", tracking_hashtags=["autumn"])
+    amy = make_creator(alex, "amy")
+    assign(alex, other, lou, amy)  # lou is on two campaigns
+    make_campaign(alex, name="Later", start_date="2099-01-01", end_date="2099-02-01")
+    tiktok.post("lou", "1", "#lumiglow")
+    tiktok.post("amy", "2", "#autumn")
+
+    run = client.post("/api/sync", headers=alex).json()
+    assert (run["creators"], run["added"]) == (2, 2)
+    assert len(client.get("/api/posts", headers=alex).json()) == 2
