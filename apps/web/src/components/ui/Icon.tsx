@@ -1,6 +1,5 @@
 import alertIcon from "@/assets/icons/circle-alert.svg";
 import arrowRight from "@/assets/icons/arrow-right.svg";
-import asterisk from "@/assets/icons/asterisk.svg";
 import calendar from "@/assets/icons/calendar.svg";
 import calendarClock from "@/assets/icons/calendar-clock.svg";
 import checkIcon from "@/assets/icons/circle-check.svg";
@@ -29,7 +28,6 @@ import users from "@/assets/icons/users.svg";
 const ICONS = {
   alert: alertIcon,
   "arrow-right": arrowRight,
-  asterisk,
   calendar,
   "calendar-clock": calendarClock,
   check: checkIcon,

@@ -1,16 +1,13 @@
-import Icon from "@/components/ui/Icon";
+import icon from "@/assets/images/hookd-icon.png";
+import wordmark from "@/assets/images/hookd-wordmark.png";
 
-// Purple asterisk tile + "Hookd" wordmark.
+// Purple "H" tile + "hookd" wordmark.
 export default function BrandMark({ size = "md" }: { size?: "md" | "lg" }) {
   const large = size === "lg";
   return (
     <span className="inline-flex items-center gap-[9px]">
-      <span
-        className={`flex items-center justify-center rounded-[10px] bg-brand text-white ${large ? "size-9" : "size-[30px]"}`}
-      >
-        <Icon name="asterisk" className="size-[25px]" />
-      </span>
-      <span className={`text-ink ${large ? "text-[30px]" : "text-[25px]"} leading-none`}>Hookd</span>
+      <img src={icon} alt="" className={large ? "size-9" : "size-[30px]"} />
+      <img src={wordmark} alt="Hookd" className={large ? "h-[30px] w-auto" : "h-[25px] w-auto"} />
     </span>
   );
 }
