@@ -39,7 +39,10 @@ def main() -> None:
     context = WorkerContext(
         stores=storage.stores,
         fetcher=make_fetcher(
-            settings.tiktok_mode, settings.tiktok_client_key, settings.tiktok_client_secret
+            settings.tiktok_mode,
+            settings.tiktok_client_key,
+            settings.tiktok_client_secret,
+            settings.tiktok_mock_delay_ms,
         ),
         publisher=SqsJobPublisher(sqs, settings.sync_queue_url),
         tz=settings.campaign_tz,

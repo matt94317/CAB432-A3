@@ -3,12 +3,16 @@
 Deterministic: the same handle and day always give the same post, so repeated
 syncs update posts instead of adding new ones. Metrics grow as a post ages, so
 each sync shows fresher numbers.
+
+`delay_seconds` stands in for the real API's response time, so load tests keep
+the worker busy the way live syncs would.
 """
 
 import hashlib
 import random
 from collections.abc import Sequence
 from datetime import UTC, datetime, time, timedelta
+from time import sleep
 
 from hookd_core.fetchers.base import FetchedPost
 
@@ -21,9 +25,12 @@ def _rng(*parts: object) -> random.Random:
 
 
 class MockFetcher:
-    def __init__(self, posts_per_week: float = 3, match_rate: float = 0.7) -> None:
+    def __init__(
+        self, posts_per_week: float = 3, match_rate: float = 0.7, delay_seconds: float = 0
+    ) -> None:
         self.posts_per_week = posts_per_week
         self.match_rate = match_rate
+        self.delay_seconds = delay_seconds
 
     def fetch_posts(
         self,
@@ -32,6 +39,8 @@ class MockFetcher:
         until: datetime,
         hashtags: Sequence[str] = (),
     ) -> list[FetchedPost]:
+        if self.delay_seconds:
+            sleep(self.delay_seconds)
         tracked = sorted(hashtags)
         posts = []
         day = since.astimezone(UTC).date()

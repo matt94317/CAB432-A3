@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     tiktok_mode: Literal["mock", "live"] = "mock"
     tiktok_client_key: str = ""
     tiktok_client_secret: str = ""
+    tiktok_mock_delay_ms: int = 0  # mock only: how long each fake fetch takes (load tests)
     # Campaign dates and target periods are calendar days in this timezone
     campaign_timezone: str = "Australia/Brisbane"
 

@@ -131,7 +131,10 @@ def get_sync_runner() -> SyncRunner:
     if settings.sync_mode == "queue":
         return QueuedSync(make_publisher())
     fetcher = make_fetcher(
-        settings.tiktok_mode, settings.tiktok_client_key, settings.tiktok_client_secret
+        settings.tiktok_mode,
+        settings.tiktok_client_key,
+        settings.tiktok_client_secret,
+        settings.tiktok_mock_delay_ms,
     )
     return InlineSync(fetcher, settings.campaign_tz, settings.sync_lookback_days)
 

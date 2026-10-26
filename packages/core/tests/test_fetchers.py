@@ -32,6 +32,14 @@ def test_mock_posts_differ_by_creator():
     assert lou.isdisjoint(amy)
 
 
+def test_mock_delay(monkeypatch):
+    slept = []
+    monkeypatch.setattr("hookd_core.fetchers.mock.sleep", slept.append)
+    make_fetcher("mock", mock_delay_ms=1500).fetch_posts("lou", NOW - timedelta(days=1), NOW)
+    MockFetcher().fetch_posts("lou", NOW - timedelta(days=1), NOW)
+    assert slept == [1.5]
+
+
 def test_make_fetcher():
     assert isinstance(make_fetcher("mock"), MockFetcher)
     assert isinstance(make_fetcher("live", "key", "secret"), TikTokResearchFetcher)
