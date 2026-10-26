@@ -174,3 +174,13 @@ def test_cannot_touch_other_organisations(
         client.patch(f"{url}/{lou['id']}", json={"target_posts": 1}, headers=sam).status_code == 404
     )
     assert client.delete(f"{url}/{lou['id']}", headers=sam).status_code == 404
+
+
+def test_campaign_list_previews_the_first_creators_by_name(
+    client, alex, campaign, make_creator, assign
+):
+    assert client.get("/api/campaigns", headers=alex).json()[0]["creators"] == []
+    assign(alex, campaign, *(make_creator(alex, h) for h in ("zed", "bea", "cal", "ann")))
+    listed = client.get("/api/campaigns", headers=alex).json()[0]
+    assert [c["handle"] for c in listed["creators"]] == ["ann", "bea", "cal"]
+    assert listed["progress"]["creators"] == 4

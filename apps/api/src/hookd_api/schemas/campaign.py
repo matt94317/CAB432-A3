@@ -106,7 +106,18 @@ class CampaignRead(BaseModel):
     updated_at: datetime
 
 
+class CreatorPreview(BaseModel):
+    id: uuid.UUID
+    name: str
+    handle: str
+
+
 class CampaignListItem(CampaignRead):
     progress: CampaignProgress | None = Field(
         default=None, description="Null until creators are assigned"
+    )
+    creators: list[CreatorPreview] = Field(
+        default_factory=list,
+        description="The first few assigned creators by name, for avatars; progress.creators "
+        "has the full count",
     )

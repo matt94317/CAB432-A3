@@ -18,6 +18,7 @@ from hookd_api.schemas.campaign import (
     CampaignProgress,
     CampaignRead,
     CampaignUpdate,
+    CreatorPreview,
     campaign_phase,
 )
 from hookd_core.cache import DashboardCache
@@ -25,6 +26,7 @@ from hookd_core.enums import CampaignStatus
 from hookd_core.progress import creator_progress, posts_by_assignment
 from hookd_core.repositories.assignments import Assignment, AssignmentRepository
 from hookd_core.repositories.campaigns import Campaign, CampaignRepository
+from hookd_core.repositories.creators import CreatorRepository
 from hookd_core.repositories.posts import Post, PostRepository
 
 
@@ -86,12 +88,14 @@ def get(repo: CampaignRepository, organisation_id: uuid.UUID, campaign_id: uuid.
 
 
 _LIST = TypeAdapter(list[CampaignListItem])
+PREVIEW_CREATORS = 3
 
 
 def list_campaigns(
     repo: CampaignRepository,
     assignments: AssignmentRepository,
     posts: PostRepository,
+    creators: CreatorRepository,
     cache: DashboardCache,
     organisation_id: uuid.UUID,
     status: CampaignStatus | None,
@@ -110,10 +114,22 @@ def list_campaigns(
     for post in posts.list(organisation_id):
         posts_by_campaign[post.campaign_id].append(post)
 
+    roster = {c.id: c for c in creators.list(organisation_id)}
+
+    def preview(assigned: list[Assignment]) -> list[CreatorPreview]:
+        people = sorted(
+            (roster[a.creator_id] for a in assigned if a.creator_id in roster),
+            key=lambda c: c.name.lower(),
+        )
+        return [CreatorPreview(id=c.id, name=c.name, handle=c.handle) for c in people][
+            :PREVIEW_CREATORS
+        ]
+
     items = [
         CampaignListItem(
             **to_read(c).model_dump(),
             progress=progress(c, by_campaign[c.id], posts_by_campaign[c.id], today, tz),
+            creators=preview(by_campaign[c.id]),
         )
         for c in repo.list(organisation_id, status)
     ]

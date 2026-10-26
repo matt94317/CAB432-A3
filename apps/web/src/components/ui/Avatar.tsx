@@ -16,18 +16,25 @@ interface AvatarProps {
   name: string;
   size?: keyof typeof SIZES;
   src?: string;
+  className?: string;
 }
 
-export default function Avatar({ name, size = "md", src }: AvatarProps) {
+export default function Avatar({ name, size = "md", src, className = "" }: AvatarProps) {
   if (src) {
     return (
-      <img src={src} alt="" aria-hidden="true" loading="lazy" className={`shrink-0 rounded-full object-cover ${SIZES[size]}`} />
+      <img
+        src={src}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        className={`shrink-0 rounded-full object-cover ${SIZES[size]} ${className}`}
+      />
     );
   }
   return (
     <span
       aria-hidden="true"
-      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-brand-soft font-semibold text-brand ${SIZES[size]}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-brand-soft font-semibold text-brand ${SIZES[size]} ${className}`}
     >
       {initials(name)}
     </span>

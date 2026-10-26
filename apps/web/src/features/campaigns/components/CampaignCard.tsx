@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import type { CampaignListItem } from "@/api/queries/campaigns";
+import Avatar from "@/components/ui/Avatar";
 import Icon from "@/components/ui/Icon";
 import Menu from "@/components/ui/Menu";
-import { demoCover } from "@/lib/demoImages";
+import { demoAvatar, demoCover } from "@/lib/demoImages";
 import { formatDateRange } from "@/lib/format";
 import CampaignStatusBadge from "./CampaignStatusBadge";
 
@@ -18,17 +19,19 @@ interface CampaignCardProps {
 
 // One campaign in the directory: status, brand, dates, creators and this period's
 // posts against target (US-06). Campaigns have no imagery, so the design's cover
-// photo is a tinted band with the hashtags (or a stock photo in demo builds).
+// photo is a tinted band with the hashtags (or a demo photo in demo builds).
 export default function CampaignCard({ campaign, busy, onEdit, onArchiveToggle, onDelete }: CampaignCardProps) {
   const archived = campaign.status === "archived";
   const progress = campaign.progress;
   const percent = progress && progress.target_posts > 0 ? Math.round((progress.posts / progress.target_posts) * 100) : 0;
   const extraTags = campaign.tracking_hashtags.length - MAX_TAGS;
   const cover = demoCover(campaign.brand, campaign.id);
+  const preview = campaign.creators ?? [];
+  const unseen = (progress?.creators ?? 0) - preview.length;
 
   return (
     <li className="flex flex-col overflow-hidden rounded-card border border-line bg-surface">
-      <div className="relative h-[92px] bg-warm px-[15px] pt-3.5">
+      <div className="relative aspect-[370/132] bg-warm px-[15px] pt-3.5">
         {cover && (
           <img
             src={cover}
@@ -76,8 +79,19 @@ export default function CampaignCard({ campaign, busy, onEdit, onArchiveToggle, 
         {progress && progress.target_posts > 0 ? (
           <>
             <div className="flex items-center justify-between text-[11px] text-ink-muted">
-              <span className="flex items-center gap-1.5">
-                <Icon name="users" className="size-3.5" />
+              <ul className="flex -space-x-2" aria-hidden="true">
+                {preview.map((creator) => (
+                  <li key={creator.id}>
+                    <Avatar name={creator.name} size="sm" src={demoAvatar(creator.handle)} className="ring-2 ring-surface" />
+                  </li>
+                ))}
+                {unseen > 0 && (
+                  <li className="flex size-[27px] items-center justify-center rounded-full bg-brand-soft text-[10px] font-medium text-brand ring-2 ring-surface">
+                    +{unseen}
+                  </li>
+                )}
+              </ul>
+              <span>
                 {progress.creators} {progress.creators === 1 ? "creator" : "creators"}
               </span>
             </div>

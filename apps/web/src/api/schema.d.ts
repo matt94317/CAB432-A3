@@ -676,6 +676,11 @@ export interface components {
             updated_at: string;
             /** @description Null until creators are assigned */
             progress?: components["schemas"]["CampaignProgress"] | null;
+            /**
+             * Creators
+             * @description The first few assigned creators by name, for avatars; progress.creators has the full count
+             */
+            creators?: components["schemas"]["CreatorPreview"][];
         };
         /**
          * CampaignPhase
@@ -856,6 +861,18 @@ export interface components {
              * @description Every tracked post, newest first
              */
             posts: components["schemas"]["PostRead"][];
+        };
+        /** CreatorPreview */
+        CreatorPreview: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Handle */
+            handle: string;
         };
         /** CreatorProgressRow */
         CreatorProgressRow: {

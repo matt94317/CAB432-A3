@@ -8,7 +8,15 @@ from enum import StrEnum
 
 from fastapi import APIRouter, Response, status
 
-from hookd_api.deps import AssignmentRepo, Cache, CampaignRepo, CampaignTz, CurrentUser, PostRepo
+from hookd_api.deps import (
+    AssignmentRepo,
+    Cache,
+    CampaignRepo,
+    CampaignTz,
+    CreatorRepo,
+    CurrentUser,
+    PostRepo,
+)
 from hookd_api.schemas.campaign import (
     CampaignCreate,
     CampaignListItem,
@@ -36,6 +44,7 @@ def list_campaigns(
     repo: CampaignRepo,
     assignments: AssignmentRepo,
     posts: PostRepo,
+    creators: CreatorRepo,
     cache: Cache,
     tz: CampaignTz,
     status: StatusFilter = StatusFilter.ACTIVE,
@@ -43,7 +52,7 @@ def list_campaigns(
     """Cached; any change to your data refreshes it. `X-Cache: hit|miss` says which."""
     wanted = None if status == StatusFilter.ALL else CampaignStatus(status.value)
     items, hit = service.list_campaigns(
-        repo, assignments, posts, cache, user.organisation_id, wanted, tz
+        repo, assignments, posts, creators, cache, user.organisation_id, wanted, tz
     )
     response.headers["X-Cache"] = "hit" if hit else "miss"
     return items
