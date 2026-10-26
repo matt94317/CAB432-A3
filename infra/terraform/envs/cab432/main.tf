@@ -115,6 +115,11 @@ module "api" {
   ]
   environment = merge(local.common_env, lookup(var.extra_environment, "api", {}))
 
+  # 0.25 vCPU ran at 100% under the load test and failed health checks, so ECS
+  # replaced tasks mid-test instead of scaling out
+  cpu    = 512
+  memory = 1024
+
   desired_count = 1
   autoscaling = {
     min_capacity        = 1
