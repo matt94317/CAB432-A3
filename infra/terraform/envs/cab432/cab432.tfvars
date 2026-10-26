@@ -39,5 +39,8 @@ dns_allow_overwrite = true
 enable_cloudfront = true
 tiktok_mode       = "mock"
 
+# Mock fetches take as long as a real TikTok call, so a load test keeps workers busy
+extra_environment = { worker = { TIKTOK_MOCK_DELAY_MS = "1500" } }
+
 # Students can't set log retention (logs:PutRetentionPolicy is denied)
 log_retention_days = 0
