@@ -30,6 +30,11 @@ output "aws_region" {
   value = var.aws_region
 }
 
+output "tiktok_mode" {
+  description = "mock builds the web app with demo photos"
+  value       = var.tiktok_mode
+}
+
 output "ecr_repository_urls" {
   value = module.registry.repository_urls
 }

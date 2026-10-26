@@ -5,6 +5,7 @@ import type { Campaign } from "@/api/queries/campaigns";
 import { useCampaignDashboard } from "@/api/queries/dashboard";
 import Alert from "@/components/ui/Alert";
 import Avatar from "@/components/ui/Avatar";
+import { demoAvatar } from "@/lib/demoImages";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -87,7 +88,7 @@ export default function CampaignCreators({ campaign }: { campaign: Campaign }) {
               return (
                 <li key={assignment.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-[13px]">
                   <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                    <Avatar name={assignment.creator.name} size="sm" />
+                    <Avatar name={assignment.creator.name} size="sm" src={demoAvatar(assignment.creator.handle)} />
                     <div className="min-w-0">
                       <Link
                         to={`/creators/${assignment.creator.id}`}

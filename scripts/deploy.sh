@@ -36,6 +36,10 @@ for svc in "${services[@]}"; do
     # Vite bakes these into the bundle; /api stays same-origin
     args+=(--build-arg "VITE_COGNITO_USER_POOL_ID=$(tf .cognito_user_pool_id.value)")
     args+=(--build-arg "VITE_COGNITO_APP_CLIENT_ID=$(tf .cognito_client_id.value)")
+    # Stock photos go with mock data only, never with real creators
+    if [[ "$(tf .tiktok_mode.value)" == mock ]]; then
+      args+=(--build-arg "VITE_DEMO_IMAGES=true")
+    fi
   fi
 
   echo "Building $svc -> $repo:$tag"

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { Overview } from "@/api/queries/overview";
 import Avatar from "@/components/ui/Avatar";
+import { demoAvatar } from "@/lib/demoImages";
 import Icon from "@/components/ui/Icon";
 import { formatCount } from "@/lib/format";
 
@@ -23,7 +24,7 @@ export default function StandoutCreators({ creators }: { creators: Overview["sta
         <ul className="flex flex-col gap-4">
           {creators.map((creator) => (
             <li key={creator.id} className="flex items-center gap-2.5">
-              <Avatar name={creator.name} />
+              <Avatar name={creator.name} src={demoAvatar(creator.handle)} />
               <div className="min-w-0 flex-1">
                 <Link to={`/creators/${creator.id}`} className="block truncate text-xs text-ink hover:text-brand">
                   {creator.name}

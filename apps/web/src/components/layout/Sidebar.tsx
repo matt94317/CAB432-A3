@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useCampaigns } from "@/api/queries/campaigns";
 import Avatar from "@/components/ui/Avatar";
+import { demoAvatar } from "@/lib/demoImages";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Menu from "@/components/ui/Menu";
 import BrandMark from "./BrandMark";
@@ -58,7 +59,7 @@ export default function Sidebar({ name, email, signingOut, onSignOut, onNavigate
         triggerClassName="flex w-full items-center gap-2.5 rounded-lg p-[9px] text-left hover:bg-canvas"
         trigger={
           <>
-            <Avatar name={name || email} />
+            <Avatar name={name || email} src={demoAvatar(email)} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-xs font-semibold text-ink">{name || email}</span>
               {name && <span className="block truncate text-[10px] text-ink-muted">{email}</span>}

@@ -1,5 +1,5 @@
-// Initials avatar: people in Hookd have no photos yet, so this stands in for the
-// round photos in the design.
+// Round photo, or initials when there's none (Hookd stores no photos; demo builds
+// pass stock ones, see lib/demoImages).
 const SIZES = {
   sm: "size-[27px] text-[10px]",
   md: "size-[34px] text-xs",
@@ -12,7 +12,18 @@ export function initials(name: string): string {
   return letters.toUpperCase();
 }
 
-export default function Avatar({ name, size = "md" }: { name: string; size?: keyof typeof SIZES }) {
+interface AvatarProps {
+  name: string;
+  size?: keyof typeof SIZES;
+  src?: string;
+}
+
+export default function Avatar({ name, size = "md", src }: AvatarProps) {
+  if (src) {
+    return (
+      <img src={src} alt="" aria-hidden="true" loading="lazy" className={`shrink-0 rounded-full object-cover ${SIZES[size]}`} />
+    );
+  }
   return (
     <span
       aria-hidden="true"

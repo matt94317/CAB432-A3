@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { Creator } from "@/api/queries/creators";
 import Avatar from "@/components/ui/Avatar";
+import { demoAvatar } from "@/lib/demoImages";
 import Badge from "@/components/ui/Badge";
 import Icon from "@/components/ui/Icon";
 import Menu from "@/components/ui/Menu";
@@ -39,7 +40,7 @@ export default function CreatorCard({ creator, onEdit, onRemove }: CreatorCardPr
           />
         </div>
         <span className="translate-y-1/2 rounded-full ring-4 ring-surface">
-          <Avatar name={creator.name} size="lg" />
+          <Avatar name={creator.name} size="lg" src={demoAvatar(creator.handle)} />
         </span>
       </div>
 

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { CampaignListItem } from "@/api/queries/campaigns";
 import Icon from "@/components/ui/Icon";
 import Menu from "@/components/ui/Menu";
+import { demoCover } from "@/lib/demoImages";
 import { formatDateRange } from "@/lib/format";
 import CampaignStatusBadge from "./CampaignStatusBadge";
 
@@ -16,18 +17,28 @@ interface CampaignCardProps {
 }
 
 // One campaign in the directory: status, brand, dates, creators and this period's
-// posts against target (US-06). The design's cover photo becomes a tinted band with
-// the hashtags, since campaigns have no imagery.
+// posts against target (US-06). Campaigns have no imagery, so the design's cover
+// photo is a tinted band with the hashtags (or a stock photo in demo builds).
 export default function CampaignCard({ campaign, busy, onEdit, onArchiveToggle, onDelete }: CampaignCardProps) {
   const archived = campaign.status === "archived";
   const progress = campaign.progress;
   const percent = progress && progress.target_posts > 0 ? Math.round((progress.posts / progress.target_posts) * 100) : 0;
   const extraTags = campaign.tracking_hashtags.length - MAX_TAGS;
+  const cover = demoCover(campaign.brand, campaign.id);
 
   return (
     <li className="flex flex-col overflow-hidden rounded-card border border-line bg-surface">
       <div className="relative h-[92px] bg-warm px-[15px] pt-3.5">
-        <div className="flex items-start justify-between">
+        {cover && (
+          <img
+            src={cover}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            className={`absolute inset-0 size-full object-cover ${archived ? "grayscale" : ""}`}
+          />
+        )}
+        <div className="relative flex items-start justify-between">
           <CampaignStatusBadge campaign={campaign} />
           <Menu
             label={`Actions for ${campaign.name}`}

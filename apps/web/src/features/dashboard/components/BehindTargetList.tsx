@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useBehindTarget } from "@/api/queries/dashboard";
 import Alert from "@/components/ui/Alert";
 import Avatar from "@/components/ui/Avatar";
+import { demoAvatar } from "@/lib/demoImages";
 import Badge from "@/components/ui/Badge";
 import PeriodProgress from "./PeriodProgress";
 
@@ -25,7 +26,7 @@ export default function BehindTargetList() {
       <ul className="mt-3 divide-y divide-line">
         {behind.data.map((item) => (
           <li key={`${item.campaign_id}-${item.creator.id}`} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
-            <Avatar name={item.creator.name} />
+            <Avatar name={item.creator.name} src={demoAvatar(item.creator.handle)} />
             <div className="min-w-0 flex-1">
               <Link to={`/creators/${item.creator.id}`} className="block truncate text-[13px] text-ink hover:text-brand">
                 {item.creator.name}

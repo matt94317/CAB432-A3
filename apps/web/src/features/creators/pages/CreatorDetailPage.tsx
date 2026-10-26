@@ -4,6 +4,7 @@ import { useCreator } from "@/api/queries/creators";
 import { useCreatorPerformance } from "@/api/queries/dashboard";
 import Alert from "@/components/ui/Alert";
 import Avatar from "@/components/ui/Avatar";
+import { demoAvatar } from "@/lib/demoImages";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
@@ -43,7 +44,7 @@ export default function CreatorDetailPage() {
               <p className="text-[11px] font-semibold tracking-wide text-brand">GOOD PEOPLE MAKE GREAT THINGS.</p>
             </div>
             <div className="flex flex-wrap items-center gap-5 px-[23px] py-6">
-              <Avatar name={creator.data.name} size="lg" />
+              <Avatar name={creator.data.name} size="lg" src={demoAvatar(creator.data.handle)} />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2.5">
                   <h1 className="text-[25px] leading-tight text-ink">{creator.data.name}</h1>

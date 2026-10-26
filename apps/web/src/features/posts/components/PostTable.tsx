@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { Post } from "@/api/queries/posts";
 import Avatar from "@/components/ui/Avatar";
+import { demoAvatar } from "@/lib/demoImages";
 import Icon from "@/components/ui/Icon";
 import Menu from "@/components/ui/Menu";
 import { formatCount, formatExact } from "@/lib/format";
@@ -126,7 +127,7 @@ export default function PostTable({
                 {showCreator && (
                   <td className="px-3 py-[13px]">
                     <div className="flex items-center gap-2">
-                      <Avatar name={post.creator.name} size="sm" />
+                      <Avatar name={post.creator.name} size="sm" src={demoAvatar(post.creator.handle)} />
                       <div className="min-w-0">
                         <Link
                           to={`/creators/${post.creator.id}`}
