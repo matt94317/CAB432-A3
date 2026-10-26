@@ -1,12 +1,15 @@
 """Campaign dashboard, creator performance and behind-target lists (US-19 to US-22).
 
-The campaign dashboard is cached per organisation (see hookd_core.cache).
+The campaign dashboard and the behind-target list are cached per organisation (see
+hookd_core.cache).
 """
 
 import uuid
 from collections import defaultdict
 from collections.abc import Iterable
 from datetime import UTC, date, datetime, timedelta, tzinfo
+
+from pydantic import TypeAdapter
 
 from hookd_api.schemas.dashboard import (
     BehindTargetItem,
@@ -23,7 +26,12 @@ from hookd_api.services import posts as posts_service
 from hookd_api.services.assignments import to_read as assignment_to_read
 from hookd_core.cache import DashboardCache
 from hookd_core.enums import CampaignStatus
-from hookd_core.progress import CreatorProgress, ProgressStatus, creator_progress
+from hookd_core.progress import (
+    CreatorProgress,
+    ProgressStatus,
+    creator_progress,
+    posts_by_assignment,
+)
 from hookd_core.repositories.posts import Post
 from hookd_core.sync import Stores
 
@@ -94,17 +102,19 @@ def campaign_dashboard(
         return CampaignDashboard.model_validate_json(cached), True
 
     posts = stores.posts.list(organisation_id, campaign_id=campaign_id)
+    own = posts_by_assignment(posts)
     creators = {c.id: c for c in stores.creators.list(organisation_id)}
     rows = []
     for a in stores.assignments.list(organisation_id, campaign_id=campaign_id):
         creator = creators.get(a.creator_id)
         if creator is None:
             continue
-        progress = creator_progress(a, campaign, posts, today, tz)
+        mine = own[(a.campaign_id, a.creator_id)]
+        progress = creator_progress(a, campaign, mine, today, tz)
         rows.append(
             CreatorProgressRow(
                 creator=assignment_to_read(a, creator).creator,
-                totals=metrics(p for p in posts if p.creator_id == a.creator_id),
+                totals=metrics(mine),
                 **_period_fields(progress),
             )
         )
@@ -125,23 +135,33 @@ def campaign_dashboard(
     return dashboard, False
 
 
-def behind_target(stores: Stores, organisation_id: uuid.UUID, tz: tzinfo) -> list[BehindTargetItem]:
-    """Everyone behind on a live, active campaign this period: who to chase, most behind first."""
+_BEHIND = TypeAdapter(list[BehindTargetItem])
+
+
+def behind_target(
+    stores: Stores, cache: DashboardCache, organisation_id: uuid.UUID, tz: tzinfo
+) -> tuple[list[BehindTargetItem], bool]:
+    """Everyone behind on a live, active campaign this period: who to chase, most behind
+    first. Also whether it came from the cache."""
     today = datetime.now(tz).date()
+    key = f"behind-target:{today.isoformat()}"
+    if cached := cache.get(organisation_id, key):
+        return _BEHIND.validate_json(cached), True
+
     campaigns = {
         c.id: c
         for c in stores.campaigns.list(organisation_id, CampaignStatus.ACTIVE)
         if c.start_date <= today <= c.end_date
     }
     creators = {c.id: c for c in stores.creators.list(organisation_id)}
-    posts = stores.posts.list(organisation_id)
+    own = posts_by_assignment(stores.posts.list(organisation_id))
     items = []
     for a in stores.assignments.list(organisation_id):
         campaign = campaigns.get(a.campaign_id)
         creator = creators.get(a.creator_id)
         if campaign is None or creator is None:
             continue
-        progress = creator_progress(a, campaign, posts, today, tz)
+        progress = creator_progress(a, campaign, own[(a.campaign_id, a.creator_id)], today, tz)
         if progress.is_behind:
             items.append(
                 BehindTargetItem(
@@ -153,14 +173,15 @@ def behind_target(stores: Stores, organisation_id: uuid.UUID, tz: tzinfo) -> lis
                     **_period_fields(progress),
                 )
             )
-    return sorted(
-        items,
+    items.sort(
         key=lambda i: (
             -(i.expected_by_today - i.posts_this_period),
             i.creator.name.lower(),
             i.campaign_name.lower(),
-        ),
+        )
     )
+    cache.set(organisation_id, key, _BEHIND.dump_json(items).decode())
+    return items, False
 
 
 def creator_performance(

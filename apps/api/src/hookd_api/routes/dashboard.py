@@ -65,9 +65,16 @@ def campaign_dashboard(
 
 
 @router.get("/behind-target", response_model=list[BehindTargetItem])
-def behind_target(user: CurrentUser, stores: AllStores, tz: CampaignTz) -> list[BehindTargetItem]:
-    """Creators behind target this period on any live campaign, most behind first."""
-    return service.behind_target(stores, user.organisation_id, tz)
+def behind_target(
+    response: Response, user: CurrentUser, stores: AllStores, cache: Cache, tz: CampaignTz
+) -> list[BehindTargetItem]:
+    """Creators behind target this period on any live campaign, most behind first.
+
+    Cached; any change to your data refreshes it. `X-Cache: hit|miss` says which.
+    """
+    items, hit = service.behind_target(stores, cache, user.organisation_id, tz)
+    response.headers["X-Cache"] = "hit" if hit else "miss"
+    return items
 
 
 @router.get(

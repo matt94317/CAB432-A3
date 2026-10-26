@@ -45,7 +45,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Campaigns */
+        /**
+         * List Campaigns
+         * @description Cached; any change to your data refreshes it. `X-Cache: hit|miss` says which.
+         */
         get: operations["list_campaigns_api_campaigns_get"];
         put?: never;
         /** Create Campaign */
@@ -343,6 +346,8 @@ export interface paths {
         /**
          * Behind Target
          * @description Creators behind target this period on any live campaign, most behind first.
+         *
+         *     Cached; any change to your data refreshes it. `X-Cache: hit|miss` says which.
          */
         get: operations["behind_target_api_behind_target_get"];
         put?: never;

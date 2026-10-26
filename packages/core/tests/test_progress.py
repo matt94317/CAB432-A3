@@ -1,12 +1,13 @@
 """Tests for posts vs target and the pace-based behind-target rule (US-19, US-22)."""
 
 import uuid
+from dataclasses import replace
 from datetime import UTC, date, datetime, time
 
 import pytest
 
 from hookd_core.enums import MatchSource, TargetPeriod
-from hookd_core.progress import ProgressStatus, creator_progress
+from hookd_core.progress import ProgressStatus, creator_progress, posts_by_assignment
 from hookd_core.repositories.assignments import Assignment
 from hookd_core.repositories.campaigns import Campaign
 from hookd_core.repositories.posts import Post
@@ -125,3 +126,23 @@ def test_after_the_campaign_ends_judges_its_last_period():
     assert (p.period_start, p.period_end) == (date(2026, 11, 30), date(2026, 12, 6))
     # Only Monday 30th was in the campaign, so the whole target was due by then
     assert (p.posts, p.expected_by_today, p.status) == (1, 3, ProgressStatus.BEHIND)
+
+
+def test_posts_by_assignment_groups_by_campaign_and_creator():
+    other_creator, other_campaign = uuid.uuid4(), uuid.uuid4()
+    mine = posts_on(date(2026, 10, 19), date(2026, 10, 20))
+    theirs = posts_on(date(2026, 10, 19), creator=other_creator)
+    elsewhere = [replace(p, campaign_id=other_campaign) for p in posts_on(date(2026, 10, 21))]
+
+    grouped = posts_by_assignment(mine + theirs + elsewhere)
+
+    assert grouped[(CAMPAIGN.id, CREATOR)] == mine
+    assert grouped[(CAMPAIGN.id, other_creator)] == theirs
+    assert grouped[(other_campaign, CREATOR)] == elsewhere
+    assert grouped[(other_campaign, other_creator)] == []
+    # Same answer as passing every post
+    a = assignment()
+    today = date(2026, 10, 21)
+    assert creator_progress(a, CAMPAIGN, grouped[(CAMPAIGN.id, CREATOR)], today, UTC) == (
+        creator_progress(a, CAMPAIGN, mine + theirs + elsewhere, today, UTC)
+    )

@@ -1,9 +1,15 @@
-"""Campaign create, update, archive, delete and list (US-03 to US-06)."""
+"""Campaign create, update, archive, delete and list (US-03 to US-06).
+
+The list, with each campaign's progress, is cached per organisation like the
+dashboards (see hookd_core.cache).
+"""
 
 import uuid
 from collections import defaultdict
 from dataclasses import replace
 from datetime import date, datetime, tzinfo
+
+from pydantic import TypeAdapter
 
 from hookd_api.errors import Conflict, InvalidRequest, NotFound
 from hookd_api.schemas.campaign import (
@@ -14,8 +20,9 @@ from hookd_api.schemas.campaign import (
     CampaignUpdate,
     campaign_phase,
 )
+from hookd_core.cache import DashboardCache
 from hookd_core.enums import CampaignStatus
-from hookd_core.progress import creator_progress
+from hookd_core.progress import creator_progress, posts_by_assignment
 from hookd_core.repositories.assignments import Assignment, AssignmentRepository
 from hookd_core.repositories.campaigns import Campaign, CampaignRepository
 from hookd_core.repositories.posts import Post, PostRepository
@@ -58,7 +65,11 @@ def progress(
     """
     if not assignments:
         return None
-    rows = [creator_progress(a, campaign, posts, today, tz) for a in assignments]
+    own = posts_by_assignment(posts)
+    rows = [
+        creator_progress(a, campaign, own[(a.campaign_id, a.creator_id)], today, tz)
+        for a in assignments
+    ]
     return CampaignProgress(
         creators=len(rows),
         posts=sum(min(r.posts, r.target_posts) for r in rows),
@@ -74,14 +85,24 @@ def get(repo: CampaignRepository, organisation_id: uuid.UUID, campaign_id: uuid.
     return campaign
 
 
+_LIST = TypeAdapter(list[CampaignListItem])
+
+
 def list_campaigns(
     repo: CampaignRepository,
     assignments: AssignmentRepository,
     posts: PostRepository,
+    cache: DashboardCache,
     organisation_id: uuid.UUID,
     status: CampaignStatus | None,
     tz: tzinfo,
-) -> list[CampaignListItem]:
+) -> tuple[list[CampaignListItem], bool]:
+    """The campaigns and whether they came from the cache."""
+    today = datetime.now(tz).date()
+    key = f"campaigns:{status or 'all'}:{today.isoformat()}"
+    if cached := cache.get(organisation_id, key):
+        return _LIST.validate_json(cached), True
+
     by_campaign: dict[uuid.UUID, list[Assignment]] = defaultdict(list)
     for assignment in assignments.list(organisation_id):
         by_campaign[assignment.campaign_id].append(assignment)
@@ -89,14 +110,15 @@ def list_campaigns(
     for post in posts.list(organisation_id):
         posts_by_campaign[post.campaign_id].append(post)
 
-    today = datetime.now(tz).date()
-    return [
+    items = [
         CampaignListItem(
             **to_read(c).model_dump(),
             progress=progress(c, by_campaign[c.id], posts_by_campaign[c.id], today, tz),
         )
         for c in repo.list(organisation_id, status)
     ]
+    cache.set(organisation_id, key, _LIST.dump_json(items).decode())
+    return items, False
 
 
 def create(repo: CampaignRepository, organisation_id: uuid.UUID, data: CampaignCreate) -> Campaign:

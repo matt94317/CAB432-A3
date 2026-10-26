@@ -130,6 +130,33 @@ def test_behind_target_lists_live_campaigns_only(client, make_campaign, assign, 
     assert items[0]["expected_by_today"] >= 1
 
 
+def test_behind_target_and_campaign_list_are_cached_until_something_changes(
+    client, make_campaign, assign, alex, lou
+):
+    live = make_campaign(
+        alex,
+        name="Live",
+        start_date=(TODAY - timedelta(days=21)).isoformat(),
+        end_date=(TODAY + timedelta(days=21)).isoformat(),
+    )
+    assign(alex, live, lou, target_posts=7)
+    for path in ("/api/behind-target", "/api/campaigns"):
+        assert client.get(path, headers=alex).headers["X-Cache"] == "miss"
+        assert client.get(path, headers=alex).headers["X-Cache"] == "hit"
+
+    client.post(f"/api/campaigns/{live['id']}/archive", headers=alex)  # a write
+
+    behind = client.get("/api/behind-target", headers=alex)
+    assert behind.headers["X-Cache"] == "miss"
+    assert behind.json() == []
+    listed = client.get("/api/campaigns", headers=alex)
+    assert listed.headers["X-Cache"] == "miss"
+    assert listed.json() == []
+    archived = client.get("/api/campaigns?status=archived", headers=alex)
+    assert archived.headers["X-Cache"] == "miss"  # each status filter is its own entry
+    assert [c["name"] for c in archived.json()] == ["Live"]
+
+
 def test_creator_performance_across_campaigns(client, make_campaign, assign, alex, lou, ended):
     other = make_campaign(alex, name="Autumn")
     assign(alex, other, lou)

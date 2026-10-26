@@ -12,6 +12,7 @@ the campaign count.
 
 import math
 import uuid
+from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, tzinfo
@@ -49,6 +50,16 @@ class CreatorProgress:
     @property
     def is_behind(self) -> bool:
         return self.status == ProgressStatus.BEHIND
+
+
+def posts_by_assignment(posts: Iterable[Post]) -> dict[tuple[uuid.UUID, uuid.UUID], list[Post]]:
+    """Posts keyed by (campaign_id, creator_id). Look up each assignment's posts here
+    rather than passing every post to creator_progress, which scans what it's given:
+    with many creators that's assignments x posts."""
+    grouped: dict[tuple[uuid.UUID, uuid.UUID], list[Post]] = defaultdict(list)
+    for post in posts:
+        grouped[(post.campaign_id, post.creator_id)].append(post)
+    return grouped
 
 
 def creator_progress(
