@@ -12,9 +12,11 @@
 #   scripts/scaling-test.sh            # worker, then api (~25 min)
 #   scripts/scaling-test.sh api        # just one of them
 #   scripts/scaling-test.sh status     # one status line, no load
+#   scripts/scaling-test.sh watch      # status every 30s, no load: run it beside
+#                                      # scripts/load_test.py (real syncs and dashboards)
 #
 # Env: TF_DIR (default infra/terraform/envs/cab432), JOBS (600),
-#      API_SECONDS (480), CONCURRENCY (50). Needs jq, ab and uuidgen.
+#      API_SECONDS (480), CONCURRENCY (50), WATCH_SECONDS (1200). Needs jq, ab and uuidgen.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -87,6 +89,10 @@ if [[ "${parts[*]}" == status ]]; then
   status
   exit
 fi
+if [[ "${parts[*]}" == watch ]]; then
+  watch_for "${WATCH_SECONDS:-1200}"
+  exit
+fi
 
 echo "Tasks shown as running/desired"
 echo
@@ -117,7 +123,7 @@ for part in "${parts[@]}"; do
     watch_for 300
     ;;
   *)
-    echo "Unknown part '$part' (worker, api or status)" >&2
+    echo "Unknown part '$part' (worker, api, status or watch)" >&2
     exit 1
     ;;
   esac

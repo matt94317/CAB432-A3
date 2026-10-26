@@ -20,6 +20,10 @@ posts (fake ones when TIKTOK_MODE=mock) and one post is added by hand.
     # Wipe that account's campaigns and creators first, then seed again
     uv run scripts/seed.py --reset
 
+    # Load test account (load@hookd.test): the demo data plus 300 generated creators
+    # on one always-on campaign, for scripts/load_test.py
+    uv run scripts/seed.py --create-user --aws-profile CAB432 --load 300
+
 Cognito ids come from COGNITO_USER_POOL_ID / COGNITO_APP_CLIENT_ID (env or .env).
 """
 
@@ -34,6 +38,7 @@ from zoneinfo import ZoneInfo
 import httpx
 
 DEFAULT_EMAIL = "demo@hookd.test"
+LOAD_EMAIL = "load@hookd.test"  # default account with --load
 DEFAULT_PASSWORD = "HookdDemo2026"
 DEFAULT_NAME = "Demo Manager"
 
@@ -72,6 +77,11 @@ ASSIGNMENTS = {
 }
 
 ARCHIVE = ["bean"]  # archived after its posts are synced
+
+# With --load: generated creators all on this campaign, each 3 posts a week
+LOAD_CAMPAIGN = ("Always-On Creator Network", "Hookd Load Test", -20, 40, ["hookdload"])
+LOAD_NICHES = ["Beauty", "Fitness", "Food", "Lifestyle", "Fashion", "Tech", "Study", "Travel"]
+MAX_ASSIGN_AT_ONCE = 100  # the API's limit per assign call
 
 
 def read_dotenv(path: Path) -> dict[str, str]:
@@ -144,10 +154,17 @@ def reset(client: httpx.Client) -> None:
         call(client, "DELETE", f"/creators/{creator['id']}")
 
 
-def seed(client: httpx.Client, today: date) -> dict[str, Any]:
-    """Create the demo workspace through the API. Returns what was made, for the summary."""
+def seed(client: httpx.Client, today: date, load: int = 0) -> dict[str, Any]:
+    """Create the demo workspace through the API, plus `load` generated creators on
+    LOAD_CAMPAIGN. Returns what was made, for the summary."""
+    generated = [
+        (f"Load Creator {i}", f"load.creator{i:04d}", LOAD_NICHES[i % len(LOAD_NICHES)])
+        for i in range(1, load + 1)
+    ]
     creators = {}
-    for name, handle, niche in CREATORS:
+    for n, (name, handle, niche) in enumerate(CREATORS + generated, 1):
+        if generated and n % 50 == 0:
+            print(f"  {n}/{len(CREATORS) + len(generated)} creators")
         created = call(
             client,
             "POST",
@@ -171,6 +188,33 @@ def seed(client: httpx.Client, today: date) -> dict[str, Any]:
             },
         )
         campaigns[key] = created["id"]
+
+    if generated:
+        name, brand, start, end, hashtags = LOAD_CAMPAIGN
+        campaigns["load"] = call(
+            client,
+            "POST",
+            "/campaigns",
+            json={
+                "name": name,
+                "brand": brand,
+                "start_date": (today + timedelta(days=start)).isoformat(),
+                "end_date": (today + timedelta(days=end)).isoformat(),
+                "tracking_hashtags": hashtags,
+            },
+        )["id"]
+        ids = [creators[handle] for _, handle, _ in generated]
+        for i in range(0, len(ids), MAX_ASSIGN_AT_ONCE):
+            call(
+                client,
+                "POST",
+                f"/campaigns/{campaigns['load']}/creators",
+                json={
+                    "creator_ids": ids[i : i + MAX_ASSIGN_AT_ONCE],
+                    "target_posts": 3,
+                    "target_period": "week",
+                },
+            )
 
     for key, rows in ASSIGNMENTS.items():
         # One call per target, since a call assigns everyone with the same target
@@ -211,7 +255,7 @@ def seed(client: httpx.Client, today: date) -> dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--email", default=DEFAULT_EMAIL)
+    parser.add_argument("--email", help=f"Default {DEFAULT_EMAIL}, or {LOAD_EMAIL} with --load")
     parser.add_argument("--password", default=DEFAULT_PASSWORD)
     parser.add_argument("--name", default=DEFAULT_NAME, help="Used with --create-user")
     parser.add_argument("--api-url", default="http://localhost:8000/api")
@@ -222,7 +266,16 @@ def main() -> None:
     parser.add_argument(
         "--reset", action="store_true", help="Delete the account's campaigns and creators first"
     )
+    parser.add_argument(
+        "--load",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Also add N generated creators on one campaign, for scripts/load_test.py",
+    )
     args = parser.parse_args()
+    if not args.email:
+        args.email = LOAD_EMAIL if args.load else DEFAULT_EMAIL
 
     pool_id = setting("COGNITO_USER_POOL_ID")
     client_id = setting("COGNITO_APP_CLIENT_ID")
@@ -233,7 +286,7 @@ def main() -> None:
     token = sign_in(pool_id, client_id, args.email, args.password)
 
     with httpx.Client(
-        base_url=args.api_url, headers={"Authorization": f"Bearer {token}"}, timeout=120
+        base_url=args.api_url, headers={"Authorization": f"Bearer {token}"}, timeout=600
     ) as client:
         me = call(client, "GET", "/me")  # first call creates the user's organisation
         has_data = call(client, "GET", "/campaigns") or call(client, "GET", "/creators")
@@ -241,12 +294,13 @@ def main() -> None:
             if not args.reset:
                 sys.exit(f"{args.email} already has data. Run again with --reset to replace it.")
             reset(client)
-        result = seed(client, datetime.now(tz).date())
+        result = seed(client, datetime.now(tz).date(), args.load)
 
     sync = result["sync"]
     print(
         f"\nSeeded {me['email']}: {len(result['creators'])} creators, "
-        f"{len(result['campaigns'])} campaigns ({len(ARCHIVE)} archived)\n"
+        f"{len(result['campaigns'])} campaigns ({len(ARCHIVE)} archived)"
+        f"{f', {args.load} generated creators for load tests' if args.load else ''}\n"
         f"Sync ({sync['mode']}): {sync['creators']} creators, {sync['added']} posts added, "
         f"{len(sync['failed'])} failed; plus 1 manual post\n"
         f"\nSign in at the web app with:\n  email:    {args.email}\n  password: {args.password}"

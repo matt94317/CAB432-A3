@@ -78,6 +78,7 @@ The logic is `hookd_core.sync`, shared by the API and the worker.
 | `SYNC_MODE=inline` (default) | "Sync now" runs inside the API request; no worker needed |
 | `SYNC_MODE=queue` | The API queues one job per creator on `SYNC_QUEUE_URL`; the worker syncs them. EventBridge sends `{"type":"scheduled_sync"}` to sync everyone on an active campaign. Used in AWS and in `docker compose` |
 | `TIKTOK_MODE=mock` (default) | Deterministic fake posts that use the campaign hashtags; metrics grow between syncs |
+| `TIKTOK_MOCK_DELAY_MS` | Mock only: each fake fetch takes this long, like a real API call, so load tests keep workers busy (default 0) |
 | `TIKTOK_MODE=live` | TikTok Research API (`TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`) |
 | `CAMPAIGN_TIMEZONE` | Campaign dates and weekly/monthly targets are days in this timezone (default `Australia/Brisbane`) |
 
@@ -96,6 +97,34 @@ Run it with `TIKTOK_MODE=mock` so "Sync now" pulls fake posts.
 uv run scripts/seed.py --create-user --aws-profile CAB432   # create demo@hookd.test too
 uv run scripts/seed.py --email you@example.com --password '...'   # or seed your own account
 uv run scripts/seed.py --reset                               # wipe the account's data first
+```
+
+## Load and cache tests
+
+These use mock TikTok data, so no TikTok account is needed. First seed a load
+test account (`load@hookd.test`). It gets the demo data plus generated creators
+on one always-on campaign:
+
+```bash
+uv run scripts/seed.py --create-user --aws-profile CAB432 --load 300 --api-url https://.../api
+```
+
+Then run `scripts/load_test.py` against the same `--api-url`, with
+`scripts/scaling-test.sh watch` in a second terminal to follow ECS tasks, queue
+depth and alarms:
+
+| Test | What it does |
+|---|---|
+| `load_test.py cache` | Edits a creator (which invalidates the cache), then reads the overview and the biggest dashboard: the first read should miss (`X-Cache`), the rest should hit. Prints miss vs hit latency and fails if a read after a write came from the cache |
+| `load_test.py api` | 50 connections for 8 minutes over cached dashboards and uncached lists; prints req/s, p50/p95, errors and cache hit rate every 10s. Scales the API on requests per task |
+| `load_test.py queue` | "Sync now" 3 times: one real sync job per creator each time (fake posts are upserted to DynamoDB and the cache is invalidated). Scales the worker from 0 on queue depth |
+
+With no delay, mock syncs finish almost instantly and one worker can drain the
+queue. To see the worker scale past one task, give mock fetches a realistic
+delay in `cab432.tfvars` and apply:
+
+```hcl
+extra_environment = { worker = { TIKTOK_MOCK_DELAY_MS = "1500" } }
 ```
 
 ## Testing with a real TikTok account
