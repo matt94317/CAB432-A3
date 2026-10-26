@@ -27,6 +27,7 @@ Watch ECS tasks, queue depth and alarms meanwhile with: scripts/scaling-test.sh 
 import argparse
 import asyncio
 import random
+import re
 import statistics
 import sys
 import time
@@ -122,8 +123,14 @@ class Stats:
         )
 
 
+def endpoint(path: str) -> str:
+    """/campaigns/<uuid>/dashboard -> /campaigns/{id}/dashboard, so dashboards share a row."""
+    return re.sub(r"[0-9a-f]{8}-[0-9a-f-]{27}", "{id}", path)
+
+
 async def api_load(base_url: str, token: str, paths: list[str], seconds: int, workers: int) -> None:
     total, window = Stats(), Stats()
+    by_endpoint: dict[str, Stats] = {endpoint(p): Stats() for p in paths}
     deadline = time.monotonic() + seconds
 
     async def worker(client: httpx.AsyncClient) -> None:
@@ -137,7 +144,7 @@ async def api_load(base_url: str, token: str, paths: list[str], seconds: int, wo
             except httpx.HTTPError:
                 status, cache = 0, None
             elapsed = time.perf_counter() - started
-            for stats in (total, window):
+            for stats in (total, window, by_endpoint[endpoint(path)]):
                 stats.times.append(elapsed)
                 stats.statuses[status] += 1
                 if cache:
@@ -148,7 +155,7 @@ async def api_load(base_url: str, token: str, paths: list[str], seconds: int, wo
         started = time.monotonic()
         while time.monotonic() < deadline:
             await asyncio.sleep(min(10, max(0, deadline - time.monotonic())))
-            print(f"{time.monotonic() - started:>5.0f}s  {window.line(10)}")
+            print(f"{time.monotonic() - started:>5.0f}s  {window.line(10)}", flush=True)
             window = Stats()
 
     async with httpx.AsyncClient(
@@ -164,6 +171,11 @@ async def api_load(base_url: str, token: str, paths: list[str], seconds: int, wo
         "Status codes: "
         + ", ".join(f"{s or 'network error'}: {n}" for s, n in sorted(total.statuses.items()))
     )
+    print("\nBy endpoint, slowest first:")
+    for name, stats in sorted(
+        by_endpoint.items(), key=lambda kv: -statistics.median(kv[1].times or [0])
+    ):
+        print(f"  {name:<28}{stats.line(seconds)}")
 
 
 # --- queue ---
