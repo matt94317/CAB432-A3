@@ -86,6 +86,51 @@ Posts the manager adds, moves or removes are marked `manual`: sync keeps their
 campaign and only refreshes metrics. Removed posts are kept flagged, so sync
 doesn't add them back.
 
+## MCP server
+
+`apps/mcp` lets an AI assistant query and update Hookd data (US-23 to US-27). It
+has no data access of its own: each tool calls the API with the caller's Cognito
+access token, so the assistant sees only that user's organisation.
+
+| Tool | API call |
+|---|---|
+| `list_campaigns` | `GET /campaigns` |
+| `get_campaign_progress` | `GET /campaigns/{id}/dashboard` (without the daily series) |
+| `list_behind_target_creators` | `GET /behind-target` |
+| `list_creators` | `GET /creators` |
+| `get_creator_performance` | `GET /creators/{id}/performance` (10 newest posts) |
+| `update_creator_target` | `PATCH /campaigns/{id}/creators/{creator_id}` |
+
+Run it with `uv run hookd-mcp` (http://localhost:8001/mcp, calls `HOOKD_API_URL`).
+Connect a client with the access token from a signed-in session as a header, for
+example in Claude Code:
+
+```bash
+claude mcp add --transport http hookd https://n12191434.cab432.com/mcp \
+  --header "Authorization: Bearer <access token>"
+```
+
+Access tokens expire after an hour; reconnect with a fresh one.
+
+### In-app assistant
+
+The **Ask Hookd** button opens a chat panel that answers with the same tools.
+`POST /mcp/chat` runs a tool-use loop in the mcp service, calling the tools
+in-process with the user's token. The browser keeps the conversation (Bedrock
+Converse format) and sends it with each message, so any mcp task can answer.
+Changes (target updates) come back as `pending` and only run after the user
+presses Confirm.
+
+| Setting | |
+|---|---|
+| `LLM_PROVIDER=bedrock` (default) | Bedrock Converse with `BEDROCK_MODEL_ID`. Needs `bedrock:InvokeModel`, which the CAB432 account denies by organisation policy |
+| `LLM_PROVIDER=openrouter` | OpenRouter with `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` (default `anthropic/claude-haiku-5.5`). Used in the A3 deployment |
+| `CHAT_MAX_STEPS` | Model calls per message (default 6) |
+
+Locally: `LLM_PROVIDER=openrouter OPENROUTER_API_KEY=sk-or-... uv run hookd-mcp`
+(Vite proxies `/mcp` to it). For Bedrock, use real AWS credentials, e.g.
+`AWS_PROFILE=CAB432`, since the shared `.env` holds fake ones for ElasticMQ.
+
 ## Demo data
 
 `scripts/seed.py` fills an account with demo creators, campaigns, assignments and

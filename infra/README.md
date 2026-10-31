@@ -67,6 +67,16 @@ aws secretsmanager put-secret-value --profile CAB432 \
 scripts/deploy.sh worker     # tasks read secrets at start
 ```
 
+The in-app assistant uses OpenRouter (`llm_provider`), since the account denies
+`bedrock:InvokeModel`. Set its key the same way:
+
+```bash
+aws secretsmanager put-secret-value --profile CAB432 \
+  --secret-id n12191434-a3-hookd-llm \
+  --secret-string '{"OPENROUTER_API_KEY":"sk-or-..."}'
+scripts/deploy.sh mcp
+```
+
 To watch auto scaling, `scripts/scaling-test.sh` fills the sync queue with
 fake jobs (worker 0 → 4 → 0) and then loads `/api/health` on the ALB with `ab`
 (api 1 → 4), printing task counts, queue depth and firing alarms every 30s:
