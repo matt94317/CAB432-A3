@@ -30,6 +30,13 @@
   --radius-card: var(--hk-radius-card);
 }
 
+/* Landing page section links */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
   background: var(--hk-color-canvas);
   color: var(--hk-color-fg);

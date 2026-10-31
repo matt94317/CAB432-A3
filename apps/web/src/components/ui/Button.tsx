@@ -17,6 +17,12 @@ const SIZES: Record<Size, string> = {
   sm: "h-9 px-[13px] text-xs",
 };
 
+// Also used to style links that look like buttons
+export function buttonClass(variant: Variant = "primary", size: Size = "md"): string {
+  const shape = variant === "link" ? "text-[13px]" : `inline-flex items-center justify-center gap-2 rounded-lg ${SIZES[size]}`;
+  return `font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${shape} ${VARIANTS[variant]}`;
+}
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
@@ -34,13 +40,12 @@ export default function Button({
   children,
   ...props
 }: ButtonProps) {
-  const shape = variant === "link" ? "text-[13px]" : `inline-flex items-center justify-center gap-2 rounded-lg ${SIZES[size]}`;
   return (
     <button
       {...props}
       disabled={disabled || loading}
       aria-busy={loading}
-      className={`font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${shape} ${VARIANTS[variant]} ${className}`}
+      className={`${buttonClass(variant, size)} ${className}`}
     >
       {icon && !loading && <Icon name={icon} />}
       {loading ? "Please wait…" : children}

@@ -9,6 +9,7 @@ import CampaignListPage from "@/features/campaigns/pages/CampaignListPage";
 import CreatorDetailPage from "@/features/creators/pages/CreatorDetailPage";
 import CreatorListPage from "@/features/creators/pages/CreatorListPage";
 import CampaignDashboardPage from "@/features/dashboard/pages/CampaignDashboardPage";
+import LandingPage from "@/features/landing/pages/LandingPage";
 import OverviewPage from "@/features/overview/pages/OverviewPage";
 import PostTrackingPage from "@/features/posts/pages/PostTrackingPage";
 
@@ -20,9 +21,9 @@ export default function App() {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/confirm" element={<ConfirmSignUpPage />} />
       </Route>
+      <Route path="/" element={<LandingPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route index element={<Navigate to="/overview" replace />} />
           <Route path="/overview" element={<OverviewPage />} />
           <Route path="/campaigns" element={<CampaignListPage />} />
           <Route path="/campaigns/:campaignId" element={<CampaignDashboardPage />} />
