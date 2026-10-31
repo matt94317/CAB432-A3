@@ -3,6 +3,19 @@
 Every creator, every target, every TikTok post, tracked in one dashboard.
 See [docs/hookd-tracker-project-plan.md](docs/hookd-tracker-project-plan.md) for the full plan and [docs/CAB432_A3_Project_Guidance.pdf](docs/CAB432_A3_Project_Guidance.pdf) for the assignment brief.
 
+## Demo
+
+Live at **https://n12191434.cab432.com**. Log in with a seeded account (mock
+TikTok data, so **Sync now** pulls fake posts):
+
+| Account | Email | Password | Data |
+|---|---|---|---|
+| Demo | `demo@hookd.test` | `HookdDemo2026` | 8 creators, 5 campaigns: the one to explore and ask **Ask Hookd** about |
+| Load test | `load@hookd.test` | `HookdDemo2026` | Demo data plus 300 generated creators, for `scripts/load_test.py` |
+
+Both are test accounts in the A3 Cognito pool, created by `scripts/seed.py`
+(see [Demo data](#demo-data)); reseed with `--reset` if the data gets messy.
+
 ## Layout
 
 ```
@@ -126,6 +139,10 @@ presses Confirm.
 | `LLM_PROVIDER=bedrock` (default) | Bedrock Converse with `BEDROCK_MODEL_ID`. Needs `bedrock:InvokeModel`, which the CAB432 account denies by organisation policy |
 | `LLM_PROVIDER=openrouter` | OpenRouter with `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` (default `anthropic/claude-haiku-5.5`). Used in the A3 deployment |
 | `CHAT_MAX_STEPS` | Model calls per message (default 6) |
+
+In the A3 deployment the mcp service calls OpenRouter (an external API, so it has no
+entry in `submission-a3-infra.yml`). Its key is the `OPENROUTER_API_KEY` field of the
+`n12191434-a3-hookd-llm` Secrets Manager secret, injected into the mcp task by ECS.
 
 Locally: `LLM_PROVIDER=openrouter OPENROUTER_API_KEY=sk-or-... uv run hookd-mcp`
 (Vite proxies `/mcp` to it). For Bedrock, use real AWS credentials, e.g.
