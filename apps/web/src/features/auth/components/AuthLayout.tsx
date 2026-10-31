@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import creatorsPhoto from "@/assets/images/login-creators.jpg";
 import testimonialPhoto from "@/assets/images/login-testimonial.jpg";
 import BrandMark from "@/components/layout/BrandMark";
+import { buttonClass } from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
 
 // Two-panel layout shared by log in, sign up and confirm: the form on the left, the
@@ -22,7 +24,15 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-screen bg-canvas p-4 sm:p-6">
       <div className="flex w-full flex-col justify-between gap-10 px-2 pb-6 pt-4 sm:px-12 lg:w-1/2 lg:max-w-[696px] lg:px-[70px] lg:pt-[30px]">
-        <BrandMark size="lg" />
+        <div className="flex items-center justify-between gap-4">
+          <Link to="/" aria-label="Hookd home">
+            <BrandMark size="lg" />
+          </Link>
+          <Link to="/" className={`${buttonClass("secondary", "sm")} whitespace-nowrap`}>
+            <Icon name="arrow-right" className="size-4 rotate-180" />
+            Back to home
+          </Link>
+        </div>
         <div className="w-full max-w-[416px]">
           <div className="flex flex-col gap-3">
             <p className="text-xs font-semibold tracking-wide text-brand">{eyebrow}</p>
