@@ -26,12 +26,14 @@ import play from "@/assets/icons/play.svg";
 import plus from "@/assets/icons/plus.svg";
 import refresh from "@/assets/icons/refresh-cw.svg";
 import search from "@/assets/icons/search.svg";
+import send from "@/assets/icons/send.svg";
 import sparkles from "@/assets/icons/sparkles.svg";
 import tick from "@/assets/icons/check.svg";
 import trendingUp from "@/assets/icons/trending-up.svg";
 import users from "@/assets/icons/users.svg";
 import usersRound from "@/assets/icons/users-round.svg";
 import video from "@/assets/icons/video.svg";
+import close from "@/assets/icons/x.svg";
 import youtube from "@/assets/icons/youtube.svg";
 
 // Icons exported from the Hookd Figma file (Lucide set). They're drawn as a CSS mask, so
@@ -48,6 +50,7 @@ const ICONS = {
   "chevrons-up-down": chevronsUpDown,
   chart: chartNoAxes,
   clapperboard,
+  close,
   download,
   ellipsis,
   "external-link": externalLink,
@@ -65,6 +68,7 @@ const ICONS = {
   plus,
   refresh,
   search,
+  send,
   sparkles,
   "trending-up": trendingUp,
   tick,

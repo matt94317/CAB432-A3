@@ -3,8 +3,23 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useMe } from "@/api/queries/me";
 import { useAuth } from "@/auth/AuthProvider";
 import Icon from "@/components/ui/Icon";
+import AssistantPanel from "@/features/assistant/AssistantPanel";
+import { useAssistant } from "@/features/assistant/useAssistant";
 import BrandMark from "./BrandMark";
 import Sidebar from "./Sidebar";
+
+// The assistant docks beside the page from Tailwind's xl breakpoint; below that it floats
+const DOCK_QUERY = "(min-width: 1280px)";
+const ASSISTANT_OPEN_KEY = "hookd.assistant.open";
+
+// Reopen a docked assistant after a reload; never auto-open the floating or phone version
+function assistantWasOpen(): boolean {
+  try {
+    return window.matchMedia(DOCK_QUERY).matches && localStorage.getItem(ASSISTANT_OPEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 const SECTIONS: [prefix: string, label: string][] = [
   ["/overview", "Overview"],
@@ -21,6 +36,17 @@ export default function AppLayout() {
   const me = useMe();
   const [signingOut, setSigningOut] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [assistantOpen, setAssistantOpenState] = useState(assistantWasOpen);
+  const assistant = useAssistant(user?.userId ?? null);
+
+  function setAssistantOpen(open: boolean) {
+    setAssistantOpenState(open);
+    try {
+      localStorage.setItem(ASSISTANT_OPEN_KEY, open ? "1" : "0");
+    } catch {
+      // Storage blocked: the panel just starts closed next time
+    }
+  }
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -43,7 +69,10 @@ export default function AppLayout() {
   );
 
   return (
-    <div className="min-h-screen bg-canvas lg:pl-56">
+    // A docked assistant takes the right 400px; the header and page reflow beside it
+    <div
+      className={`min-h-screen bg-canvas transition-[padding] duration-200 lg:pl-56 ${assistantOpen ? "xl:pr-[400px]" : ""}`}
+    >
       <aside className="fixed inset-y-0 left-0 hidden w-56 lg:block">{sidebar}</aside>
 
       {drawerOpen && (
@@ -87,9 +116,23 @@ export default function AppLayout() {
           {me.error.message}
         </p>
       )}
-      <main className="mx-auto max-w-[1216px] px-4 py-6 sm:px-8 sm:py-8">
+      {/* Extra bottom padding so the last row can scroll clear of the Ask Hookd button */}
+      <main className="mx-auto max-w-[1216px] px-4 pt-6 pb-24 sm:px-8 sm:pt-8 sm:pb-28">
         <Outlet />
       </main>
+
+      {assistantOpen ? (
+        <AssistantPanel assistant={assistant} onClose={() => setAssistantOpen(false)} />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAssistantOpen(true)}
+          className="fixed right-4 bottom-4 z-30 inline-flex h-11 items-center gap-2 rounded-full bg-brand px-4 text-[13px] font-semibold text-white shadow-lg hover:bg-brand/90 sm:right-8 sm:bottom-8"
+        >
+          <Icon name="sparkles" />
+          Ask Hookd
+        </button>
+      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ export default defineConfig({
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
   server: {
-    // Same-origin /api in dev, like the ALB in production
-    proxy: { "/api": "http://localhost:8000" },
+    // Same-origin /api and /mcp in dev, like the ALB in production
+    proxy: { "/api": "http://localhost:8000", "/mcp": "http://localhost:8001" },
   },
 });
