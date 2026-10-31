@@ -39,6 +39,14 @@ module "secrets" {
   keys   = ["TIKTOK_CLIENT_KEY", "TIKTOK_CLIENT_SECRET"]
 }
 
+# The assistant's OpenRouter key, read by the mcp service only. Set the real value with
+# `aws secretsmanager put-secret-value` (see infra/README.md)
+module "llm_secrets" {
+  source = "../../modules/secrets"
+  name   = "${local.name}-llm"
+  keys   = ["OPENROUTER_API_KEY"]
+}
+
 module "cache" {
   source             = "../../modules/cache"
   name               = "${local.name}-cache"
@@ -61,7 +69,7 @@ module "cluster" {
   execution_role_arn    = var.execution_role_arn
   queue_arns            = [module.queue.queue_arn]
   table_arns            = [module.table.arn]
-  secret_arns           = [module.secrets.arn]
+  secret_arns           = [module.secrets.arn, module.llm_secrets.arn]
 }
 
 # All app data. RDS is blocked on CAB432; the plan is to move back to RDS after A3
@@ -180,9 +188,18 @@ module "mcp" {
   target_group_arn = module.edge.target_group_arns.mcp
   environment = merge(
     local.common_env,
-    { HOOKD_API_URL = "https://${var.domain_name}/api", PORT = "8080" },
+    {
+      HOOKD_API_URL    = "https://${var.domain_name}/api"
+      PORT             = "8080"
+      LLM_PROVIDER     = var.llm_provider
+      BEDROCK_MODEL_ID = var.bedrock_model_id
+      OPENROUTER_MODEL = var.openrouter_model
+    },
     lookup(var.extra_environment, "mcp", {}),
   )
+  secrets = {
+    OPENROUTER_API_KEY = module.llm_secrets.value_from.OPENROUTER_API_KEY
+  }
 
   desired_count = 1
 }

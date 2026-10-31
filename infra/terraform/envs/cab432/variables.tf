@@ -129,6 +129,23 @@ variable "tiktok_mode" {
   default     = "mock"
 }
 
+variable "llm_provider" {
+  description = "Chat model provider for the assistant: bedrock or openrouter. CAB432 denies bedrock:InvokeModel by organisation policy, so A3 uses openrouter"
+  type        = string
+  default     = "openrouter"
+}
+
+variable "openrouter_model" {
+  type    = string
+  default = "anthropic/claude-haiku-5.5"
+}
+
+variable "bedrock_model_id" {
+  description = "Bedrock model or inference profile for the in-app assistant (mcp service)"
+  type        = string
+  default     = "au.anthropic.claude-haiku-4-5-20251001-v1:0"
+}
+
 variable "sync_schedule" {
   type    = string
   default = "rate(6 hours)"

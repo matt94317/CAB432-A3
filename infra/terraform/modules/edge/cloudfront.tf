@@ -30,6 +30,9 @@ resource "aws_cloudfront_distribution" "this" {
       https_port             = 443
       origin_protocol_policy = "https-only"
       origin_ssl_protocols   = ["TLSv1.2"]
+      # The assistant's /mcp/chat can take several model calls; 60 s is the max
+      # without a quota increase (and the ALB's idle timeout)
+      origin_read_timeout = 60
     }
   }
 
