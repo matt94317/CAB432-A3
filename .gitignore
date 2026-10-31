@@ -33,3 +33,4 @@ cdk.out/
 # Gradescope submission build output
 submission/
 submission.zip
+*.tsbuildinfo
