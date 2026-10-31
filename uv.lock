@@ -498,6 +498,7 @@ name = "hookd-mcp"
 version = "0.1.0"
 source = { editable = "apps/mcp" }
 dependencies = [
+    { name = "boto3" },
     { name = "hookd-core" },
     { name = "httpx" },
     { name = "mcp", extra = ["cli"] },
@@ -506,6 +507,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "boto3", specifier = ">=1.35" },
     { name = "hookd-core", editable = "packages/core" },
     { name = "httpx", specifier = ">=0.28" },
     { name = "mcp", extras = ["cli"], specifier = ">=2.3" },

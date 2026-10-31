@@ -5,6 +5,7 @@ description = "Hookd Tracker MCP server"
 requires-python = ">=3.12"
 dependencies = [
     "hookd-core",
+    "boto3>=1.35",
     "mcp[cli]>=2.3",
     "httpx>=0.28",
     "pydantic-settings>=2.6",
